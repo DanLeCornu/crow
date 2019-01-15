@@ -18,20 +18,54 @@ export default class CompassScreen extends React.Component {
         {params ? (
           <>
             <Compass destination={params.destination} />
-            <Button
-              title="Change destination"
-              onPress={() => this.props.navigation.navigate('Map')}
-            />
+            <ChangeButtonContainer>
+              <DestinationButton>
+                <Button
+                  title="Change destination"
+                  color="white"
+                  onPress={() => this.props.navigation.navigate('Map')}
+                />
+              </DestinationButton>
+            </ChangeButtonContainer>
           </>
         ) : (
           <>
-            <Button
-              title="You must first set a destination"
-              onPress={() => this.props.navigation.navigate('Map')}
-            />
+            <SetButtonContainer>
+              <DestinationButton>
+                <Button
+                  title="Set destination"
+                  color="white"
+                  onPress={() => this.props.navigation.navigate('Map')}
+                />
+              </DestinationButton>
+            </SetButtonContainer>
           </>
         )}
       </>
     );
   }
 }
+
+const DestinationButton = styled(View)`
+  width: 45%;
+  border-radius: 10px;
+  background: #01b3fd;
+`;
+
+const SetButtonContainer = styled(View)`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ChangeButtonContainer = styled(View)`
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  height: 10%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;

@@ -7,6 +7,7 @@ import styled from 'styled-components';
 export default class Compass extends React.Component {
   state = {
     heading: null,
+    accuracy: null,
     bearing: null,
     arrowHeading: null,
     location: [0, 0],
@@ -41,7 +42,8 @@ export default class Compass extends React.Component {
   getHeading = async () => {
     Location.watchHeadingAsync(data => {
       let heading = Math.ceil(data.trueHeading);
-      this.setState({ heading });
+      let accuracy = Math.ceil(data.accuracy);
+      this.setState({ heading, accuracy });
       this.setArrowHeading();
       this.setCompassHeading();
     });
@@ -99,6 +101,7 @@ export default class Compass extends React.Component {
     const { destination } = this.props;
     const {
       heading,
+      accuracy,
       bearing,
       location,
       arrowHeading,
@@ -110,10 +113,18 @@ export default class Compass extends React.Component {
 
     return (
       <>
-        {/* <Text>heading: {heading}</Text>
-        <Text>target bearing: {bearing}</Text>
-        <Text>arrow heading: {arrowHeading}</Text>
-        <Text>compass heading: {compassHeading}</Text> */}
+        {accuracy <= 1 && (
+          <LowAccuracyWarning>
+            ⚠️ Your phone's compass accuracy is low!
+          </LowAccuracyWarning>
+        )}
+        <MetaData>
+          <Text>heading: {heading}</Text>
+          <Text>accuracy: {accuracy}</Text>
+          <Text>target bearing: {bearing}</Text>
+          <Text>arrow heading: {arrowHeading}</Text>
+          <Text>compass heading: {compassHeading}</Text>
+        </MetaData>
         <CompassContainer>
           <CompassImage
             style={{ transform: [{ rotate: spinCompass }] }}
@@ -130,7 +141,9 @@ export default class Compass extends React.Component {
 }
 
 const CompassContainer = styled(View)`
-  height: 90%;
+  position: absolute;
+  top: 64px;
+  height: 100%;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -146,4 +159,21 @@ const Arrow = styled(Image)`
   width: 50px;
   height: 50px;
   position: absolute;
+`;
+
+const MetaData = styled(View)`
+  position: absolute;
+  top: 70px;
+  left: 10px;
+`;
+
+const LowAccuracyWarning = styled(Text)`
+  background: #fdb135;
+  position: absolute;
+  top: 64px;
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  z-index: 1;
 `;
