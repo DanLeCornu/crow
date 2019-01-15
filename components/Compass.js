@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { Location } from 'expo';
 
+import Geolib from 'geolib';
+
 import styled from 'styled-components';
 
 export default class Compass extends React.Component {
@@ -11,6 +13,7 @@ export default class Compass extends React.Component {
     bearing: null,
     arrowHeading: null,
     location: [0, 0],
+    distance: null,
   };
 
   componentDidMount() {
@@ -22,6 +25,7 @@ export default class Compass extends React.Component {
     if (prevprops.destination != this.props.destination) {
       await this.setBearing();
       this.setArrowHeading();
+      this.setDistance();
     }
   };
 
@@ -35,6 +39,7 @@ export default class Compass extends React.Component {
         let location = [data.coords.latitude, data.coords.longitude];
         this.setState({ location });
         this.setBearing();
+        this.setDistance();
       },
     );
   };
@@ -69,6 +74,17 @@ export default class Compass extends React.Component {
       this.props.destination[1],
     );
     this.setState({ bearing });
+  };
+
+  setDistance = () => {
+    let distance = Geolib.getDistance(
+      { latitude: this.state.location[0], longitude: this.state.location[1] },
+      {
+        latitude: this.props.destination[0],
+        longitude: this.props.destination[1],
+      },
+    );
+    this.setState({ distance });
   };
 
   // calculates bearing between two coords
@@ -106,6 +122,7 @@ export default class Compass extends React.Component {
       location,
       arrowHeading,
       compassHeading,
+      distance,
     } = this.state;
 
     const spinArrow = this.state.arrowHeading + 'deg';
@@ -124,6 +141,7 @@ export default class Compass extends React.Component {
           <Text>target bearing: {bearing}</Text>
           <Text>arrow heading: {arrowHeading}</Text>
           <Text>compass heading: {compassHeading}</Text>
+          <Text>distance (m): {distance}</Text>
         </MetaData>
         <CompassContainer>
           <CompassImage
