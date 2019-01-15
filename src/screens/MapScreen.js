@@ -1,11 +1,12 @@
 import React from 'react';
 import { MapView, Location, Permissions } from 'expo';
-import { Text, View, Button, ActivityIndicator } from 'react-native';
+import { Text, View, Button, Animated } from 'react-native';
 
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
 
 import styled from 'styled-components';
+import { Easing } from 'react-native-reanimated';
 
 export default class MapScreen extends React.Component {
   static navigationOptions = {
@@ -20,12 +21,28 @@ export default class MapScreen extends React.Component {
     location: [0, 0],
     destination: [0, 0],
     destinationSet: false,
+    animation: new Animated.Value(0),
   };
 
   componentDidMount() {
     this.requestPermissions();
     this.getCurrentLocation();
     this.getLocation();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(this.state.animation, {
+          toValue: 10,
+          duration: 400,
+          easing: Easing.linear,
+        }),
+        Animated.timing(this.state.animation, {
+          toValue: 0,
+          duration: 200,
+          easing: Easing.linear,
+        }),
+      ]),
+    ).start();
   }
 
   requestPermissions = async () => {
@@ -82,8 +99,13 @@ export default class MapScreen extends React.Component {
   };
 
   render() {
-    const { loading, location, destination, destinationSet } = this.state;
-
+    const {
+      loading,
+      location,
+      destination,
+      destinationSet,
+      animation,
+    } = this.state;
     const GOOGLE_MAPS_APIKEY = 'AIzaSyCu0hjf3aN3d37UJViHdOCoGhlqK7h5Fdg';
 
     return (
@@ -91,8 +113,11 @@ export default class MapScreen extends React.Component {
         {loading ? (
           <>
             <LoadingContainer>
-              <LoadingText>Fetching your location</LoadingText>
-              <ActivityIndicator size="large" color="black" />
+              <LoadingText>Fetching your location ...</LoadingText>
+              <Crow
+                style={{ transform: [{ translateY: animation }] }}
+                source={require('../../assets/images/crow.png')}
+              />
             </LoadingContainer>
           </>
         ) : (
@@ -225,5 +250,11 @@ const LoadingContainer = styled(View)`
 `;
 
 const LoadingText = styled(Text)`
-  margin-bottom: 10px;
+  margin: 0 0 20px 20px;
+  font-size: 22px;
+`;
+
+const Crow = styled(Animated.Image)`
+  width: 70px;
+  height: 70px;
 `;

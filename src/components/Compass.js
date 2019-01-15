@@ -130,13 +130,13 @@ export default class Compass extends React.Component {
             ⚠️ Your phone's compass accuracy is low!
           </LowAccuracyWarning>
         )}
-        {distance && <Distance>{distance} km</Distance>}
+        {distance > 0 && <Distance>{distance} km</Distance>}
         <CompassContainer>
           <CompassImage
             style={{ transform: [{ rotate: spinCompass }] }}
             source={require('../../assets/images/compass.png')}
           />
-          {distance && (
+          {distance > 0 && (
             <Arrow
               style={{ transform: [{ rotate: spinArrow }] }}
               source={require('../../assets/images/arrow.png')}
