@@ -60,7 +60,7 @@ export default class MapScreen extends React.Component {
       enableHighAccuracy: true,
     });
     let location = [data.coords.latitude, data.coords.longitude];
-    // this.setState({ location, loading: false });
+    this.setState({ location, loading: false });
   };
 
   getLocation = async () => {
