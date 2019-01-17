@@ -1,7 +1,9 @@
 import React from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar, View } from 'react-native';
 import { AppLoading, Asset, Font, Icon } from 'expo';
 import AppNavigator from './navigation/AppNavigator';
+
+import styled from 'styled-components';
 
 export default class App extends React.Component {
   state = {
@@ -19,10 +21,10 @@ export default class App extends React.Component {
       );
     } else {
       return (
-        <View style={styles.container}>
+        <Container>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
           <AppNavigator />
-        </View>
+        </Container>
       );
     }
   }
@@ -54,9 +56,9 @@ export default class App extends React.Component {
   };
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-});
+const Container = styled(View)`
+  flex: 1;
+  background: #fff;
+  height: 100%;
+  padding-top: 20px;
+`;

@@ -1,18 +1,19 @@
 import React from 'react';
 import { View, Text, Image } from 'react-native';
 import { Location } from 'expo';
-
 import Geolib from 'geolib';
+
+import { Alert } from './Alert';
 
 import styled from 'styled-components';
 
 export default class Compass extends React.Component {
   state = {
     heading: null,
-    accuracy: 3,
+    accuracy: null,
     bearing: null,
     arrowHeading: null,
-    location: [0, 0],
+    location: null,
     distance: null,
   };
 
@@ -126,9 +127,7 @@ export default class Compass extends React.Component {
     return (
       <>
         {accuracy <= 1 && (
-          <LowAccuracyWarning>
-            ⚠️ Your phone's compass accuracy is low!
-          </LowAccuracyWarning>
+          <Alert>⚠️ Your phone's compass accuracy is low!</Alert>
         )}
         {distance > 0 && <Distance>{distance} km</Distance>}
         <CompassContainer>
@@ -150,10 +149,9 @@ export default class Compass extends React.Component {
 
 const CompassContainer = styled(View)`
   position: absolute;
-  top: 64px;
+  top: 0;
   height: 100%;
   width: 100%;
-  display: flex;
   justify-content: center;
   align-items: center;
 `;
@@ -161,31 +159,22 @@ const CompassContainer = styled(View)`
 const CompassImage = styled(Image)`
   width: 300px;
   height: 300px;
+  resize-mode: contain;
 `;
 
 const Arrow = styled(Image)`
   width: 270px;
   height: 270px;
   position: absolute;
+  resize-mode: contain;
 `;
 
 const Distance = styled(Text)`
   position: absolute;
-  top: 64px;
+  top: 0;
   height: 150px;
   width: 100%;
   line-height: 150px;
   font-size: 32px;
   text-align: center;
-`;
-
-const LowAccuracyWarning = styled(Text)`
-  background: #fdb135;
-  position: absolute;
-  top: 64px;
-  width: 100%;
-  height: 40px;
-  line-height: 40px;
-  text-align: center;
-  z-index: 1;
 `;

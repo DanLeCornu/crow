@@ -1,16 +1,17 @@
 import React from 'react';
 import { MapView, Location, Permissions } from 'expo';
 import { Text, View, Button, Animated, Easing } from 'react-native';
-
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
 
+import { Alert } from '../components/Alert';
+
 import styled from 'styled-components';
-// import { Easing } from 'react-native-reanimated';
 
 export default class MapScreen extends React.Component {
   static navigationOptions = {
     title: 'Map',
+    header: null,
   };
 
   state = {
@@ -18,17 +19,20 @@ export default class MapScreen extends React.Component {
     loading: true,
     heading: null,
     bearing: null,
-    location: [0, 0],
-    destination: [0, 0],
-    destinationSet: false,
+    location: null,
+    destination: null,
     animation: new Animated.Value(0),
+    place: null,
   };
 
   componentDidMount() {
     this.requestPermissions();
     this.getCurrentLocation();
     this.getLocation();
+    this.startAnimation();
+  }
 
+  startAnimation = () => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(this.state.animation, {
@@ -43,15 +47,16 @@ export default class MapScreen extends React.Component {
         }),
       ]),
     ).start();
-  }
+  };
 
   requestPermissions = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
       this.setState({
-        errorMessage:
-          'Permission to access location was denied, Please go to app settings to grant location services.',
+        errorMessage: 'Location premission denied.',
       });
+    } else {
+      this.setState({ errorMessage: null });
     }
   };
 
@@ -77,12 +82,12 @@ export default class MapScreen extends React.Component {
   };
 
   handleMapPress = e => {
-    if (!this.state.destinationSet) {
+    if (!this.state.destination) {
       let destination = [
         parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
         parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
       ];
-      this.setState({ destination, destinationSet: true });
+      this.setState({ destination });
     }
   };
 
@@ -95,15 +100,19 @@ export default class MapScreen extends React.Component {
   };
 
   handleClearDestination = () => {
-    this.setState({ destinationSet: false });
+    this.setState({ destination: null });
+  };
+
+  handleHideError = () => {
+    this.setState({ errorMessage: null });
   };
 
   render() {
     const {
+      errorMessage,
       loading,
       location,
       destination,
-      destinationSet,
       animation,
     } = this.state;
     const GOOGLE_MAPS_APIKEY = 'AIzaSyCu0hjf3aN3d37UJViHdOCoGhlqK7h5Fdg';
@@ -122,13 +131,11 @@ export default class MapScreen extends React.Component {
           </>
         ) : (
           <>
-            <InfoContainer>
-              <InfoText>
-                {destinationSet
-                  ? 'Press and drag the marker to change destination'
-                  : 'Tap the map to set destination'}
-              </InfoText>
-            </InfoContainer>
+            {errorMessage && (
+              <Alert onPress={() => this.handleHideError()}>
+                ⚠️ {errorMessage}
+              </Alert>
+            )}
             <Map
               showsUserLocation
               initialRegion={{
@@ -141,7 +148,7 @@ export default class MapScreen extends React.Component {
                 this.handleMapPress(e);
               }}
             >
-              {destinationSet && (
+              {destination && (
                 <>
                   <Marker
                     draggable
@@ -163,33 +170,42 @@ export default class MapScreen extends React.Component {
                     strokeWidth={3}
                     strokeColor="#01b3fd"
                     mode="bicycling"
+                    onError={() =>
+                      this.setState({
+                        errorMessage: 'Could not calculate route',
+                      })
+                    }
                   />
                 </>
               )}
             </Map>
+            {destination ? (
+              <Actions>
+                <ClearButton>
+                  <Button
+                    title="Clear"
+                    color="white"
+                    onPress={() => this.handleClearDestination()}
+                  />
+                </ClearButton>
+                <ConfirmButton>
+                  <Button
+                    title="Confirm"
+                    color="white"
+                    onPress={() =>
+                      this.props.navigation.navigate('Compass', {
+                        destination,
+                      })
+                    }
+                  />
+                </ConfirmButton>
+              </Actions>
+            ) : (
+              <InfoContainer>
+                <InfoText>Tap the map to set destination</InfoText>
+              </InfoContainer>
+            )}
           </>
-        )}
-        {destinationSet && (
-          <Actions>
-            <ClearButton>
-              <Button
-                title="Clear"
-                color="white"
-                onPress={() => this.handleClearDestination()}
-              />
-            </ClearButton>
-            <ConfirmButton>
-              <Button
-                title="Confirm"
-                color="white"
-                onPress={() =>
-                  this.props.navigation.navigate('Compass', {
-                    destination,
-                  })
-                }
-              />
-            </ConfirmButton>
-          </Actions>
         )}
       </>
     );
@@ -205,7 +221,6 @@ const Actions = styled(View)`
   bottom: 0;
   width: 100%;
   height: 60px;
-  display: flex;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
@@ -228,10 +243,9 @@ const InfoContainer = styled(View)`
   position: absolute;
   height: 50px;
   width: 100%;
-  top: 64px;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.35);
   z-index: 1;
-  display: flex;
   justify-content: center;
   align-items: center;
 `;
@@ -244,7 +258,6 @@ const InfoText = styled(Text)`
 const LoadingContainer = styled(View)`
   width: 100%;
   height: 100%;
-  display: flex;
   justify-content: center;
   align-items: center;
 `;

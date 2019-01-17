@@ -8,16 +8,7 @@ import styled from 'styled-components';
 export default class CompassScreen extends React.Component {
   static navigationOptions = {
     title: 'Compass',
-  };
-
-  state = {
-    destinationSet: false,
-  };
-
-  componentDidMount = () => {
-    if (this.props.navigation.state) {
-      this.setState({ destinationSet: true });
-    }
+    header: null,
   };
 
   render() {
@@ -68,7 +59,6 @@ const DestinationButtonContainer = styled(View)`
   bottom: 20px;
   width: 100%;
   height: 10%;
-  display: flex;
   justify-content: center;
   align-items: center;
 `;

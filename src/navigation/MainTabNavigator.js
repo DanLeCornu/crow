@@ -37,7 +37,15 @@ CompassStack.navigationOptions = {
   ),
 };
 
-export default createBottomTabNavigator({
-  MapStack,
-  CompassStack,
-});
+export default createBottomTabNavigator(
+  {
+    MapStack,
+    CompassStack,
+  },
+  {
+    lazy: false,
+    tabBarOptions: {
+      showLabel: false,
+    },
+  },
+);
