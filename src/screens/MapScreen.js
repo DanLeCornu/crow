@@ -1,12 +1,12 @@
 import React from 'react';
 import { MapView, Location, Permissions } from 'expo';
-import { Text, View, Button, Animated } from 'react-native';
+import { Text, View, Button, Animated, Easing } from 'react-native';
 
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
 
 import styled from 'styled-components';
-import { Easing } from 'react-native-reanimated';
+// import { Easing } from 'react-native-reanimated';
 
 export default class MapScreen extends React.Component {
   static navigationOptions = {
@@ -32,14 +32,14 @@ export default class MapScreen extends React.Component {
     Animated.loop(
       Animated.sequence([
         Animated.timing(this.state.animation, {
-          toValue: 10,
-          duration: 400,
-          easing: Easing.linear,
+          toValue: -20,
+          duration: 600,
+          easing: Easing.inOut(Easing.ease),
         }),
         Animated.timing(this.state.animation, {
           toValue: 0,
-          duration: 200,
-          easing: Easing.linear,
+          duration: 600,
+          easing: Easing.bounce,
         }),
       ]),
     ).start();
@@ -250,8 +250,8 @@ const LoadingContainer = styled(View)`
 `;
 
 const LoadingText = styled(Text)`
-  margin: 0 0 20px 20px;
-  font-size: 22px;
+  margin: 0 0 40px 25px;
+  font-size: 20px;
 `;
 
 const Crow = styled(Animated.Image)`
