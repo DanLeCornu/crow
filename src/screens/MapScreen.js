@@ -33,12 +33,12 @@ export default class MapScreen extends React.Component {
       Animated.sequence([
         Animated.timing(this.state.animation, {
           toValue: -20,
-          duration: 600,
+          duration: 300,
           easing: Easing.inOut(Easing.ease),
         }),
         Animated.timing(this.state.animation, {
           toValue: 0,
-          duration: 600,
+          duration: 700,
           easing: Easing.bounce,
         }),
       ]),
@@ -60,7 +60,7 @@ export default class MapScreen extends React.Component {
       enableHighAccuracy: true,
     });
     let location = [data.coords.latitude, data.coords.longitude];
-    this.setState({ location, loading: false });
+    // this.setState({ location, loading: false });
   };
 
   getLocation = async () => {
@@ -257,4 +257,5 @@ const LoadingText = styled(Text)`
 const Crow = styled(Animated.Image)`
   width: 70px;
   height: 70px;
+  resize-mode: contain;
 `;
