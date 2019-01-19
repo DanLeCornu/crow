@@ -17,9 +17,10 @@ class Compass extends React.Component {
 
   componentWillMount() {
     this.subscribeToHeading();
-    this.setBearing();
-    this.setCompassRotation();
-    this.setArrowRotation();
+    if (this.props.destination) {
+      this.setBearing();
+      this.setArrowRotation();
+    }
   }
 
   componentWillUnmount() {
@@ -27,8 +28,10 @@ class Compass extends React.Component {
   }
 
   componentDidUpdate = prevProps => {
-    if (prevProps.location != this.props.location) {
-      this.setBearing();
+    if (this.props.destination) {
+      if (prevProps.location != this.props.location) {
+        this.setBearing();
+      }
     }
   };
 
@@ -38,7 +41,9 @@ class Compass extends React.Component {
       let accuracy = data.accuracy;
       this.setState({ heading, accuracy });
       this.setCompassRotation();
-      this.setArrowRotation();
+      if (this.props.destination) {
+        this.setArrowRotation();
+      }
     });
     this.setState({ headingSubscription });
   };
