@@ -1,34 +1,21 @@
 import React from 'react';
-import { MapView, Location, Permissions } from 'expo';
+import { MapView } from 'expo';
 import { Text, View, Button, Animated, Easing } from 'react-native';
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
-
 import { Alert } from '../components/Alert';
-
 import styled from 'styled-components';
+import AppContext from '../AppContext';
 
-export default class MapScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Map',
-    header: null,
-  };
+// Put on config file
+const GOOGLE_MAPS_APIKEY = 'AIzaSyCu0hjf3aN3d37UJViHdOCoGhlqK7h5Fdg';
 
+class MapScreen extends React.Component {
   state = {
-    errorMessage: null,
-    loading: true,
-    heading: null,
-    bearing: null,
-    location: null,
-    destination: null,
     animation: new Animated.Value(0),
-    place: null,
   };
 
   componentDidMount() {
-    this.requestPermissions();
-    this.getCurrentLocation();
-    this.getLocation();
     this.startAnimation();
   }
 
@@ -49,77 +36,30 @@ export default class MapScreen extends React.Component {
     ).start();
   };
 
-  requestPermissions = async () => {
-    let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== 'granted') {
-      this.setState({
-        errorMessage: 'Location premission denied.',
-      });
-    } else {
-      this.setState({ errorMessage: null });
-    }
-  };
-
-  getCurrentLocation = async () => {
-    let data = await Location.getCurrentPositionAsync({
-      enableHighAccuracy: true,
-    });
-    let location = [data.coords.latitude, data.coords.longitude];
-    this.setState({ location, loading: false });
-  };
-
-  getLocation = async () => {
-    Location.watchPositionAsync(
-      {
-        enableHighAccuracy: true,
-        distanceInterval: 5,
-      },
-      data => {
-        let location = [data.coords.latitude, data.coords.longitude];
-        this.setState({ location });
-      },
-    );
-  };
-
-  handleMapPress = e => {
-    if (!this.state.destination) {
-      let destination = [
+  handleSetDestination = e => {
+    if (!this.props.destination) {
+      const destination = [
         parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
         parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
       ];
-      this.setState({ destination });
+      this.props.setDestination(destination);
     }
   };
 
-  handleMarkerDragEnd = e => {
-    let destination = [
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-    ];
-    this.setState({ destination });
-  };
-
-  handleClearDestination = () => {
-    this.setState({ destination: null });
-  };
-
-  handleHideError = () => {
-    this.setState({ errorMessage: null });
-  };
-
   render() {
+    const { animation } = this.state;
     const {
-      errorMessage,
-      loading,
+      alert,
       location,
       destination,
-      animation,
-    } = this.state;
-    const GOOGLE_MAPS_APIKEY = 'AIzaSyCu0hjf3aN3d37UJViHdOCoGhlqK7h5Fdg';
+      clearDestination,
+      setAlert,
+      hideAlert,
+    } = this.props;
 
     return (
       <>
-        {loading ? (
+        {!location ? (
           <>
             <LoadingContainer>
               <LoadingText>Fetching your location ...</LoadingText>
@@ -131,11 +71,7 @@ export default class MapScreen extends React.Component {
           </>
         ) : (
           <>
-            {errorMessage && (
-              <Alert onPress={() => this.handleHideError()}>
-                ⚠️ {errorMessage}
-              </Alert>
-            )}
+            {alert && <Alert onPress={() => hideAlert()}>⚠️ {alert}</Alert>}
             <Map
               showsUserLocation
               initialRegion={{
@@ -145,7 +81,7 @@ export default class MapScreen extends React.Component {
                 longitudeDelta: 0.03,
               }}
               onPress={e => {
-                this.handleMapPress(e);
+                this.handleSetDestination(e);
               }}
             >
               {destination && (
@@ -157,7 +93,7 @@ export default class MapScreen extends React.Component {
                       longitude: destination[1],
                     }}
                     onDragEnd={e => {
-                      this.handleMarkerDragEnd(e);
+                      this.handleSetDestination(e);
                     }}
                   />
                   <MapViewDirections
@@ -170,11 +106,7 @@ export default class MapScreen extends React.Component {
                     strokeWidth={3}
                     strokeColor="#01b3fd"
                     mode="bicycling"
-                    onError={() =>
-                      this.setState({
-                        errorMessage: 'Could not calculate route',
-                      })
-                    }
+                    onError={() => setAlert('Could not calculate route')}
                   />
                 </>
               )}
@@ -185,18 +117,14 @@ export default class MapScreen extends React.Component {
                   <Button
                     title="Clear"
                     color="white"
-                    onPress={() => this.handleClearDestination()}
+                    onPress={() => clearDestination()}
                   />
                 </ClearButton>
                 <ConfirmButton>
                   <Button
                     title="Confirm"
                     color="white"
-                    onPress={() =>
-                      this.props.navigation.navigate('Compass', {
-                        destination,
-                      })
-                    }
+                    onPress={() => this.props.setScreen('Compass')}
                   />
                 </ConfirmButton>
               </Actions>
@@ -208,6 +136,16 @@ export default class MapScreen extends React.Component {
           </>
         )}
       </>
+    );
+  }
+}
+
+export default class MapScreenContainer extends React.Component {
+  render() {
+    return (
+      <AppContext.Consumer>
+        {context => <MapScreen {...context} />}
+      </AppContext.Consumer>
     );
   }
 }
