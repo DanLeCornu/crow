@@ -28,6 +28,6 @@
         "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map"
       }
     },
-    "description": "\"As the crow flies\" cycling navigation app"
+    "description": "Simple \"As the crow flies\" navigation app"
   }
 }
