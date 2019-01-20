@@ -12,7 +12,7 @@ export class Alert extends React.Component {
 const AlertText = styled(Text)`
   background: #fdb135;
   position: absolute;
-  top: 0;
+  top: 20px;
   width: 100%;
   height: 40px;
   line-height: 40px;

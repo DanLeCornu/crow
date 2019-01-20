@@ -62,11 +62,11 @@ class MapScreen extends React.Component {
         {!location ? (
           <>
             <LoadingContainer>
-              <LoadingText>Fetching your location ...</LoadingText>
               <Crow
                 style={{ transform: [{ translateY: animation }] }}
                 source={require('../../assets/images/crow.png')}
               />
+              <LoadingText>is fetching your location ...</LoadingText>
             </LoadingContainer>
           </>
         ) : (
@@ -196,17 +196,18 @@ const InfoText = styled(Text)`
 const LoadingContainer = styled(View)`
   width: 100%;
   height: 100%;
-  justify-content: center;
+  flex-direction: row
+  justify-content: center;;
   align-items: center;
 `;
 
 const LoadingText = styled(Text)`
-  margin: 0 0 40px 25px;
   font-size: 20px;
 `;
 
 const Crow = styled(Animated.Image)`
-  width: 70px;
-  height: 70px;
+  width: 25px;
+  height: 25px;
+  margin-right: 10px;
   resize-mode: contain;
 `;

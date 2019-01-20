@@ -9,7 +9,6 @@ class Compass extends React.Component {
   state = {
     headingSubscription: null,
     heading: null,
-    accuracy: null,
     bearing: null,
     compassRotation: null,
     arrowRotation: null,
@@ -38,8 +37,12 @@ class Compass extends React.Component {
   subscribeToHeading = async () => {
     let headingSubscription = await Location.watchHeadingAsync(data => {
       let heading = Math.ceil(data.trueHeading);
-      let accuracy = data.accuracy;
-      this.setState({ heading, accuracy });
+      if (data.accuracy <= 1) {
+        this.props.setAlert("Your phone's compass accuracy is low!");
+      } else {
+        this.props.hideAlert();
+      }
+      this.setState({ heading });
       this.setCompassRotation();
       if (this.props.destination) {
         this.setArrowRotation();
@@ -94,16 +97,13 @@ class Compass extends React.Component {
   };
 
   render() {
-    const { accuracy } = this.state;
-    const { destination } = this.props;
+    const { alert, hideAlert, destination } = this.props;
     const arrowRotation = this.state.arrowRotation + 'deg';
     const compassRotation = this.state.compassRotation + 'deg';
 
     return (
       <>
-        {accuracy && accuracy <= 1 && (
-          <Alert>⚠️ Your phone's compass accuracy is low!</Alert>
-        )}
+        {alert && <Alert onPress={() => hideAlert()}>⚠️ {alert}</Alert>}
         <CompassWrapper>
           <CompassImage
             style={{ transform: [{ rotate: compassRotation }] }}
