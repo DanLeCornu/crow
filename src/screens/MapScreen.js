@@ -6,9 +6,7 @@ import { Marker } from 'react-native-maps';
 import { Alert } from '../components/Alert';
 import styled from 'styled-components';
 import AppContext from '../AppContext';
-
-// Put on config file
-const GOOGLE_MAPS_APIKEY = 'AIzaSyCu0hjf3aN3d37UJViHdOCoGhlqK7h5Fdg';
+import { GOOGLE_MAPS_APIKEY } from '../../Config';
 
 class MapScreen extends React.Component {
   state = {

@@ -6,10 +6,9 @@ import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
 import Sentry from 'sentry-expo';
+import { SENTRY_DSN } from '../Config';
 Sentry.enableInExpoDevelopment = true;
-Sentry.config(
-  'https://37e2a759270c432eafd92cd434a71e93@sentry.io/1374074',
-).install();
+Sentry.config(SENTRY_DSN).install();
 
 export default class App extends React.Component {
   state = {
