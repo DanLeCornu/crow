@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StatusBar, View } from 'react-native';
+import { Platform, StatusBar, Animated, Dimensions } from 'react-native';
 import { AppLoading, Asset, Font, Icon, Location, Permissions } from 'expo';
 import styled from 'styled-components';
 import AppContext from './AppContext';
@@ -12,11 +12,11 @@ Sentry.config(SENTRY_DSN).install();
 
 export default class App extends React.Component {
   state = {
-    screen: 'Map',
     alert: null,
     loadingComplete: false,
     location: null,
     destination: null,
+    screenPosition: new Animated.Value(0),
     setDestination: destination => this.handleSetDestination(destination),
     clearDestination: () => this.handleClearDestination(),
     setAlert: alert => this.handleSetAlert(alert),
@@ -46,14 +46,29 @@ export default class App extends React.Component {
   };
 
   handleSetScreen = screen => {
-    this.setState({ screen });
+    if (screen == "Compass") {this.startCompassScreenTransition()}
+    if (screen == "Map") {this.startMapScreenTransition()}
+  };
+
+  startCompassScreenTransition = () => {
+    Animated.timing(this.state.screenPosition, {
+      toValue: -Dimensions.get('window').width,
+      duration: 300,
+    }).start();
+  };
+
+  startMapScreenTransition = () => {
+    Animated.timing(this.state.screenPosition, {
+      toValue: 0,
+      duration: 300,
+    }).start();
   };
 
   requestPermissions = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
     if (status !== 'granted') {
       this.setState({
-        alert: 'Location premissions denied',
+        alert: 'Location permissions denied',
       });
     }
   };
@@ -95,17 +110,6 @@ export default class App extends React.Component {
     this.setState({ loadingComplete: true });
   };
 
-  renderScreen = () => {
-    switch (this.state.screen) {
-      case 'Map':
-        return <MapScreen />;
-      case 'Compass':
-        return <CompassScreen />;
-      default:
-        return <MapScreen />;
-    }
-  };
-
   render() {
     if (!this.state.loadingComplete && !this.props.skipLoadingScreen) {
       return (
@@ -116,21 +120,25 @@ export default class App extends React.Component {
         />
       );
     } else {
+      const { screenPosition } = this.state;      
       return (
         <AppContext.Provider value={this.state}>
-          <Container>
-            {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-            {this.renderScreen()}
-          </Container>
+          {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
+          <ScreenContainer style={{ transform: [{ translateX: screenPosition }] }}>
+            <MapScreen />
+            {this.state.destination &&
+              <CompassScreen />
+            }
+          </ScreenContainer>
         </AppContext.Provider>
       );
     }
   }
 }
 
-const Container = styled(View)`
-  flex: 1;
-  background: #fff;
+const ScreenContainer = styled(Animated.View)`
+  width: 200%;
   height: 100%;
-  padding-top: 20px;
-`;
+  flex-wrap: wrap;
+`
+

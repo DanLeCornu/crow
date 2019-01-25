@@ -27,7 +27,7 @@ class Compass extends React.Component {
   }
 
   componentDidUpdate = prevProps => {
-    if (this.props.destination) {
+    if (this.props.destination) {   
       if (prevProps.location != this.props.location) {
         this.setBearing();
       }
@@ -37,7 +37,7 @@ class Compass extends React.Component {
   subscribeToHeading = async () => {
     let headingSubscription = await Location.watchHeadingAsync(data => {
       let heading = Math.ceil(data.trueHeading);
-      if (data.accuracy <= 1) {
+      if (data.accuracy == 0) {
         this.props.setAlert("Your phone's compass accuracy is low!");
       } else {
         this.props.hideAlert();

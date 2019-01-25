@@ -46,7 +46,7 @@ class CompassScreen extends React.Component {
     }
 
     return (
-      <>
+      <Container>
         {distance && <Distance>{distance} km</Distance>}
         <Compass />
         <DestinationButtonContainer>
@@ -58,7 +58,7 @@ class CompassScreen extends React.Component {
             />
           </DestinationButton>
         </DestinationButtonContainer>
-      </>
+      </Container>
     );
   }
 }
@@ -72,6 +72,11 @@ export default class CompassScreenContainer extends React.Component {
     );
   }
 }
+
+const Container = styled(View)`
+  width: 50%;
+  height: 100%;
+`
 
 const DestinationButton = styled(View)`
   width: 45%;

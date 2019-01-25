@@ -35,13 +35,11 @@ class MapScreen extends React.Component {
   };
 
   handleSetDestination = e => {
-    if (!this.props.destination) {
-      const destination = [
-        parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
-        parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-      ];
-      this.props.setDestination(destination);
-    }
+    const destination = [
+      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
+      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
+    ];
+    this.props.setDestination(destination);
   };
 
   render() {
@@ -56,7 +54,7 @@ class MapScreen extends React.Component {
     } = this.props;
 
     return (
-      <>
+      <Container>
         {!location ? (
           <>
             <LoadingContainer>
@@ -133,7 +131,7 @@ class MapScreen extends React.Component {
             )}
           </>
         )}
-      </>
+      </Container>
     );
   }
 }
@@ -147,6 +145,11 @@ export default class MapScreenContainer extends React.Component {
     );
   }
 }
+
+const Container = styled(View)`
+  width: 50%;
+  height: 100%;
+`
 
 const Map = styled(MapView)`
   height: 100%;
