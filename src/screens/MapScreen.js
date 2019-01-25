@@ -3,29 +3,28 @@ import { MapView } from 'expo';
 import { Text, View, Button, Animated, Easing } from 'react-native';
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
-import { Alert } from '../components/Alert';
-import styled from 'styled-components';
 import AppContext from '../AppContext';
 import { GOOGLE_MAPS_APIKEY } from '../../Config';
+import styled from 'styled-components';
 
 class MapScreen extends React.Component {
   state = {
-    animation: new Animated.Value(0),
+    crowPosition: new Animated.Value(0),
   };
 
   componentDidMount() {
-    this.startAnimation();
+    this.bounceCrow();
   }
 
-  startAnimation = () => {
+  bounceCrow = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(this.state.animation, {
+        Animated.timing(this.state.crowPosition, {
           toValue: -20,
           duration: 300,
           easing: Easing.inOut(Easing.ease),
         }),
-        Animated.timing(this.state.animation, {
+        Animated.timing(this.state.crowPosition, {
           toValue: 0,
           duration: 700,
           easing: Easing.bounce,
@@ -43,14 +42,12 @@ class MapScreen extends React.Component {
   };
 
   render() {
-    const { animation } = this.state;
+    const { crowPosition } = this.state;
     const {
-      alert,
       location,
       destination,
       clearDestination,
       setAlert,
-      hideAlert,
     } = this.props;
 
     return (
@@ -59,7 +56,7 @@ class MapScreen extends React.Component {
           <>
             <LoadingContainer>
               <Crow
-                style={{ transform: [{ translateY: animation }] }}
+                style={{ transform: [{ translateY: crowPosition }] }}
                 source={require('../../assets/images/crow.png')}
               />
               <LoadingText>is fetching your location ...</LoadingText>
@@ -67,7 +64,6 @@ class MapScreen extends React.Component {
           </>
         ) : (
           <>
-            {alert && <Alert onPress={() => hideAlert()}>⚠️ {alert}</Alert>}
             <Map
               showsUserLocation
               initialRegion={{

@@ -79,9 +79,9 @@ const Container = styled(View)`
 `
 
 const DestinationButton = styled(View)`
-  width: 45%;
   border-radius: 10px;
   background: #01b3fd;
+  padding: 5px;
 `;
 
 const DestinationButtonContainer = styled(View)`

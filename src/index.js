@@ -1,7 +1,6 @@
 import React from 'react';
 import { Platform, StatusBar, Animated, Dimensions } from 'react-native';
 import { AppLoading, Asset, Font, Icon, Location, Permissions } from 'expo';
-import styled from 'styled-components';
 import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
@@ -10,6 +9,8 @@ import { SENTRY_DSN } from '../Config';
 Sentry.enableInExpoDevelopment = true;
 Sentry.config(SENTRY_DSN).install();
 
+import styled from 'styled-components';
+
 export default class App extends React.Component {
   state = {
     alert: null,
@@ -17,6 +18,7 @@ export default class App extends React.Component {
     location: null,
     destination: null,
     screenPosition: new Animated.Value(0),
+    alertPosition: new Animated.Value(-60),
     setDestination: destination => this.handleSetDestination(destination),
     clearDestination: () => this.handleClearDestination(),
     setAlert: alert => this.handleSetAlert(alert),
@@ -38,26 +40,51 @@ export default class App extends React.Component {
   };
 
   handleHideAlert = () => {
-    this.setState({ alert: null });
+    if (this.state.alert) {
+      this.hideAlertAnimation();
+      setTimeout(() => {
+        this.setState({ alert: null });
+      }, 300);
+    }
   };
 
   handleSetAlert = alert => {
-    this.setState({ alert });
+    if (!this.state.alert) {
+      this.setState({ alert });
+      this.showAlertAnimation()
+      setTimeout(() => {
+        this.handleHideAlert();
+      }, 2000);
+    }
+  };
+
+  showAlertAnimation = () => {
+    Animated.timing(this.state.alertPosition, {
+      toValue: 20,
+      duration: 300,
+    }).start();
+  };
+
+  hideAlertAnimation = () => {
+    Animated.timing(this.state.alertPosition, {
+      toValue: -60,
+      duration: 300,
+    }).start();
   };
 
   handleSetScreen = screen => {
-    if (screen == "Compass") {this.startCompassScreenTransition()}
-    if (screen == "Map") {this.startMapScreenTransition()}
+    if (screen == "Compass") {this.compassScreenTransition()}
+    if (screen == "Map") {this.mapScreenTransition()}
   };
 
-  startCompassScreenTransition = () => {
+  compassScreenTransition = () => {
     Animated.timing(this.state.screenPosition, {
       toValue: -Dimensions.get('window').width,
       duration: 300,
     }).start();
   };
 
-  startMapScreenTransition = () => {
+  mapScreenTransition = () => {
     Animated.timing(this.state.screenPosition, {
       toValue: 0,
       duration: 300,
@@ -120,11 +147,12 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { screenPosition } = this.state;      
+      const { screenPosition, alert, alertPosition } = this.state;      
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
           <ScreenContainer style={{ transform: [{ translateX: screenPosition }] }}>
+            <Alert style={{top: alertPosition}}>⚠️ {alert}</Alert>
             <MapScreen />
             {this.state.destination &&
               <CompassScreen />
@@ -139,6 +167,17 @@ export default class App extends React.Component {
 const ScreenContainer = styled(Animated.View)`
   width: 200%;
   height: 100%;
+  padding-top: 20px;
   flex-wrap: wrap;
 `
+
+const Alert = styled(Animated.Text)`
+  background: #fdb135;
+  position: absolute;
+  width: 50%;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  z-index: 1;
+`;
 

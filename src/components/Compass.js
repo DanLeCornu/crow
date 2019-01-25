@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Image } from 'react-native';
 import { Location } from 'expo';
-import { Alert } from './Alert';
 import styled from 'styled-components';
 import AppContext from '../AppContext';
 
@@ -40,7 +39,9 @@ class Compass extends React.Component {
       if (data.accuracy == 0) {
         this.props.setAlert("Your phone's compass accuracy is low!");
       } else {
-        this.props.hideAlert();
+        if (this.props.alert == "Your phone's compass accuracy is low!") {
+          this.props.hideAlert();
+        }
       }
       this.setState({ heading });
       this.setCompassRotation();
@@ -97,13 +98,12 @@ class Compass extends React.Component {
   };
 
   render() {
-    const { alert, hideAlert, destination } = this.props;
+    const { destination } = this.props;
     const arrowRotation = this.state.arrowRotation + 'deg';
     const compassRotation = this.state.compassRotation + 'deg';
 
     return (
       <>
-        {alert && <Alert onPress={() => hideAlert()}>⚠️ {alert}</Alert>}
         <CompassWrapper>
           <CompassImage
             style={{ transform: [{ rotate: compassRotation }] }}
