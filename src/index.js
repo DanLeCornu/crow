@@ -121,6 +121,7 @@ export default class App extends React.Component {
         require('../assets/images/crow.png'),
         require('../assets/images/compass.png'),
         require('../assets/images/arrow.png'),
+        require('../assets/images/nq_logo.png'),
       ]),
       Font.loadAsync({
         ...Icon.Ionicons.font,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapView } from 'expo';
-import { Text, View, Button, Animated, Easing } from 'react-native';
+import { Text, View, Image, Button, Animated, Easing, Linking } from 'react-native';
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
@@ -59,7 +59,10 @@ class MapScreen extends React.Component {
                 style={{ transform: [{ translateY: crowPosition }] }}
                 source={require('../../assets/images/crow.png')}
               />
-              <LoadingText>is fetching your location ...</LoadingText>
+              <LoadingText>fetching your location ...</LoadingText>
+                <NQ onPress={() => Linking.openURL('https://www.noquarter.co')}>
+                  a <NQLogo source={require('../../assets/images/nq_logo.png')} /> production
+                </NQ>
             </LoadingContainer>
           </>
         ) : (
@@ -208,3 +211,18 @@ const Crow = styled(Animated.Image)`
   margin-right: 10px;
   resize-mode: contain;
 `;
+
+const NQ = styled(Text)`
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  line-height: 40px;
+  font-size: 20px;
+`
+
+const NQLogo = styled(Image)`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+`
