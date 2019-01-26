@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapView } from 'expo';
-import { Text, View, Image, Button, Animated, Easing, Linking } from 'react-native';
+import { View, Image, Animated, Easing, Linking, TouchableHighlight } from 'react-native';
+import { CustomText } from '../components/CustomText'
 import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
@@ -10,6 +11,7 @@ import styled from 'styled-components';
 class MapScreen extends React.Component {
   state = {
     crowPosition: new Animated.Value(0),
+    actionsPosition: new Animated.Value(-80),
   };
 
   componentDidMount() {
@@ -39,15 +41,37 @@ class MapScreen extends React.Component {
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
     ];
     this.props.setDestination(destination);
+    this.showActions();
+  };
+
+  showActions = () => {
+    Animated.timing(this.state.actionsPosition, {
+      toValue: 0,
+      duration: 200,
+    }).start();
+  };
+
+  handleClearDestination = () => {    
+    this.hideActions();
+    setTimeout(() => {
+      this.props.clearDestination();
+    }, 300);
+  };
+
+  hideActions = () => {
+    Animated.timing(this.state.actionsPosition, {
+      toValue: -80,
+      duration: 200,
+    }).start();
   };
 
   render() {
-    const { crowPosition } = this.state;
+    const { crowPosition, actionsPosition } = this.state;
     const {
       location,
       destination,
-      clearDestination,
       setAlert,
+      distance,
     } = this.props;
 
     return (
@@ -69,11 +93,13 @@ class MapScreen extends React.Component {
           <>
             <Map
               showsUserLocation
+              mapType="mutedStandard"
+              showsPointsOfInterest={false}
               initialRegion={{
                 latitude: location[0],
                 longitude: location[1],
-                latitudeDelta: 0.03,
-                longitudeDelta: 0.03,
+                latitudeDelta: 0.04,
+                longitudeDelta: 0.04,
               }}
               onPress={e => {
                 this.handleSetDestination(e);
@@ -106,28 +132,25 @@ class MapScreen extends React.Component {
                 </>
               )}
             </Map>
-            {destination ? (
-              <Actions>
-                <ClearButton>
-                  <Button
-                    title="Clear"
-                    color="white"
-                    onPress={() => clearDestination()}
-                  />
-                </ClearButton>
-                <ConfirmButton>
-                  <Button
-                    title="Confirm"
-                    color="white"
-                    onPress={() => this.props.setScreen('Compass')}
-                  />
-                </ConfirmButton>
-              </Actions>
-            ) : (
-              <InfoContainer>
-                <InfoText>Tap the map to set destination</InfoText>
-              </InfoContainer>
-            )}
+            {destination && 
+              <ActionsContainer style={{bottom: actionsPosition}}>
+                <Actions>
+                  <ActionsDistanceContainer>
+                    <ActionsDistance>
+                      <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+                    </ActionsDistance>
+                  </ActionsDistanceContainer>
+                  <ActionsButtons>
+                    <ButtonReject onPress={() => this.handleClearDestination()}>
+                      <Cross source={require('../../assets/images/cross.png')}/>
+                    </ButtonReject>
+                    <ButtonConfirm onPress={() => this.props.setScreen('Compass')}>
+                      <Tick source={require('../../assets/images/tick.png')}/>
+                    </ButtonConfirm>
+                  </ActionsButtons>
+                </Actions>
+              </ActionsContainer>
+            }
           </>
         )}
       </Container>
@@ -149,70 +172,89 @@ const Container = styled(View)`
   width: 50%;
   height: 100%;
 `
-
 const Map = styled(MapView)`
   height: 100%;
-`;
-
+`
+const ActionsContainer = styled(Animated.View)`
+  position: absolute;
+  width: 94%;
+  height: 80px;
+  margin: 0 3% 0 3%;
+  background: white;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  shadow-color: #000;
+  shadow-opacity: 0.1;
+`
 const Actions = styled(View)`
-  position: absolute;
-  bottom: 0;
+  height: 100%;
   width: 100%;
-  height: 60px;
+  flex-wrap: wrap;
+`
+const ActionsDistanceContainer = styled(View)`
+  width: 50%;
+  height: 100%;
   flex-direction: row;
-  justify-content: space-around;
   align-items: center;
-`;
-
-const ButtonContainer = styled(View)`
-  width: 45%;
-  border-radius: 10px;
-`;
-
-const ClearButton = styled(ButtonContainer)`
-  background: #ff595c;
-`;
-
-const ConfirmButton = styled(ButtonContainer)`
-  background: #3fdcad;
-`;
-
-const InfoContainer = styled(View)`
-  position: absolute;
+  justify-content: center;
+`
+const ActionsDistance = styled(View)`
+  flex-direction: row;
+  align-items: baseline;
+`
+const DistanceText = styled(CustomText)`
+  font-size: 32px;
+`
+const UnitText = styled(CustomText)`
+  font-size: 18px;
+  margin-left: 5px;
+`
+const ActionsButtons = styled(View)`
+  height: 100%;
+  width: 50%;
+  flex-direction: row;
+  justify-content: flex-end;;
+  align-items: center;
+`
+const Button = styled(TouchableHighlight)`
+  width: 50px;
   height: 50px;
-  width: 100%;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 1;
+  border-radius: 30px;
   justify-content: center;
   align-items: center;
-`;
-
-const InfoText = styled(Text)`
-  color: white;
-  font-size: 16px;
-`;
-
+`
+const ButtonConfirm = styled(Button)`
+  background: #7bbb5e;
+  margin: 0 15px 0 15px;
+`
+const ButtonReject = styled(Button)`
+  background: #fd6477;
+`
+const Cross = styled(Image)`
+  height: 20px;
+  width: 20px;
+`
+const Tick = styled(Image)`
+  height: 25px;
+  width: 25px;
+`
 const LoadingContainer = styled(View)`
   width: 100%;
   height: 100%;
   flex-direction: row
   justify-content: center;;
   align-items: center;
-`;
-
-const LoadingText = styled(Text)`
+`
+const LoadingText = styled(CustomText)`
   font-size: 20px;
-`;
-
+`
 const Crow = styled(Animated.Image)`
   width: 25px;
   height: 25px;
   margin-right: 10px;
   resize-mode: contain;
-`;
-
-const NQ = styled(Text)`
+`
+const NQ = styled(CustomText)`
   position: absolute;
   bottom: 20px;
   width: 100%;
@@ -220,7 +262,6 @@ const NQ = styled(Text)`
   line-height: 40px;
   font-size: 20px;
 `
-
 const NQLogo = styled(Image)`
   width: 40px;
   height: 40px;

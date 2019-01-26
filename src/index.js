@@ -1,9 +1,11 @@
 import React from 'react';
 import { Platform, StatusBar, Animated, Dimensions } from 'react-native';
-import { AppLoading, Asset, Font, Icon, Location, Permissions } from 'expo';
+import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
+import { CustomText } from './components/CustomText'
+import Geolib from 'geolib';
 import Sentry from 'sentry-expo';
 import { SENTRY_DSN } from '../Config';
 Sentry.enableInExpoDevelopment = true;
@@ -17,8 +19,9 @@ export default class App extends React.Component {
     loadingComplete: false,
     location: null,
     destination: null,
+    distance: null,
     screenPosition: new Animated.Value(0),
-    alertPosition: new Animated.Value(-60),
+    alertPosition: new Animated.Value(-40),
     setDestination: destination => this.handleSetDestination(destination),
     clearDestination: () => this.handleClearDestination(),
     setAlert: alert => this.handleSetAlert(alert),
@@ -31,8 +34,32 @@ export default class App extends React.Component {
     this.subscribeToLocation();
   }
 
-  handleSetDestination = destination => {
-    this.setState({ destination });
+  componentDidUpdate = prevProps => {
+    if (this.state.destination) {
+      if (prevProps.location != this.props.location) {
+        this.setDistance();
+      }
+    }
+  };
+
+  handleSetDestination = async destination => {
+    await this.setState({ destination });
+    this.setDistance();
+  };
+
+  setDistance = async () => {
+    let distanceM = await Geolib.getDistance(
+      {
+        latitude: this.state.location[0],
+        longitude: this.state.location[1],
+      },
+      {
+        latitude: this.state.destination[0],
+        longitude: this.state.destination[1],
+      },
+    );
+    let distance = (distanceM / 1000).toFixed(2);
+    this.setState({ distance })
   };
 
   handleClearDestination = () => {
@@ -60,14 +87,14 @@ export default class App extends React.Component {
 
   showAlertAnimation = () => {
     Animated.timing(this.state.alertPosition, {
-      toValue: 20,
+      toValue: 0,
       duration: 300,
     }).start();
   };
 
   hideAlertAnimation = () => {
     Animated.timing(this.state.alertPosition, {
-      toValue: -60,
+      toValue: -40,
       duration: 300,
     }).start();
   };
@@ -112,7 +139,7 @@ export default class App extends React.Component {
           this.setState({ location });
         },
       );
-    }, 3000);
+    }, 2000);
   };
 
   loadResourcesAsync = async () => {
@@ -124,8 +151,8 @@ export default class App extends React.Component {
         require('../assets/images/nq_logo.png'),
       ]),
       Font.loadAsync({
-        ...Icon.Ionicons.font,
-        'space-mono': require('../assets/fonts/SpaceMono-Regular.ttf'),
+        'open-sans': require('../assets/fonts/OpenSans-Regular.ttf'),
+        'open-sans-bold': require('../assets/fonts/OpenSans-Bold.ttf'),
       }),
     ]);
   };
@@ -148,12 +175,15 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { screenPosition, alert, alertPosition } = this.state;      
+      const { screenPosition, alert, alertPosition } = this.state;
+      const screenHeight = Dimensions.get('window').height - 20
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          <ScreenContainer style={{ transform: [{ translateX: screenPosition }] }}>
-            <Alert style={{top: alertPosition}}>⚠️ {alert}</Alert>
+          <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
+            <AlertContainer style={{top: alertPosition}}>
+              <Alert>{alert}</Alert>
+            </AlertContainer>
             <MapScreen />
             {this.state.destination &&
               <CompassScreen />
@@ -167,18 +197,24 @@ export default class App extends React.Component {
 
 const ScreenContainer = styled(Animated.View)`
   width: 200%;
-  height: 100%;
-  padding-top: 20px;
   flex-wrap: wrap;
+  margin-top: 20px;
+  overflow: hidden;
 `
-
-const Alert = styled(Animated.Text)`
-  background: #fdb135;
+const AlertContainer = styled(Animated.View)`
   position: absolute;
-  width: 50%;
+  background: #fdb135;
+  width: 47%;
+  margin: 0 1% 0 1%;
   height: 40px;
+  z-index: 1;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  shadow-color: #000;
+  shadow-opacity: 0.1;
+`
+const Alert = styled(CustomText)`
   line-height: 40px;
   text-align: center;
-  z-index: 1;
-`;
-
+  font-size: 16px;
+`

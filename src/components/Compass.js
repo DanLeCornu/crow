@@ -36,13 +36,6 @@ class Compass extends React.Component {
   subscribeToHeading = async () => {
     let headingSubscription = await Location.watchHeadingAsync(data => {
       let heading = Math.ceil(data.trueHeading);
-      if (data.accuracy == 0) {
-        this.props.setAlert("Your phone's compass accuracy is low!");
-      } else {
-        if (this.props.alert == "Your phone's compass accuracy is low!") {
-          this.props.hideAlert();
-        }
-      }
       this.setState({ heading });
       this.setCompassRotation();
       if (this.props.destination) {
@@ -98,24 +91,19 @@ class Compass extends React.Component {
   };
 
   render() {
-    const { destination } = this.props;
     const arrowRotation = this.state.arrowRotation + 'deg';
     const compassRotation = this.state.compassRotation + 'deg';
 
     return (
       <>
-        <CompassWrapper>
-          <CompassImage
-            style={{ transform: [{ rotate: compassRotation }] }}
-            source={require('../../assets/images/compass.png')}
-          />
-          {destination && (
-            <Arrow
-              style={{ transform: [{ rotate: arrowRotation }] }}
-              source={require('../../assets/images/arrow.png')}
-            />
-          )}
-        </CompassWrapper>
+        <CompassImage
+          style={{ transform: [{ rotate: compassRotation }] }}
+          source={require('../../assets/images/compass.png')}
+        />
+        <Arrow
+          style={{ transform: [{ rotate: arrowRotation }] }}
+          source={require('../../assets/images/arrow.png')}
+        />
       </>
     );
   }
@@ -131,21 +119,11 @@ export default class CompassContainer extends React.Component {
   }
 }
 
-const CompassWrapper = styled(View)`
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-`;
-
 const CompassImage = styled(Image)`
   width: 300px;
   height: 300px;
   resize-mode: contain;
 `;
-
 const Arrow = styled(Image)`
   width: 270px;
   height: 270px;
