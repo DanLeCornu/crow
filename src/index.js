@@ -39,9 +39,9 @@ export default class App extends React.Component {
     this.subscribeToLocation();
   }
 
-  componentDidUpdate = prevProps => {
+  componentDidUpdate = (prevProps, prevState) => {
     if (this.state.destination) {
-      if (prevProps.location != this.props.location) {
+      if (prevState.location != this.state.location) {
         this.setDistanceToNextWaypoint()
       }
     }
