@@ -19,14 +19,19 @@ export default class App extends React.Component {
     loadingComplete: false,
     location: null,
     destination: null,
-    distance: null,
+    distanceToNextWaypoint: 0,
+    waypoints: [],
     screenPosition: new Animated.Value(0),
     alertPosition: new Animated.Value(-40),
-    setDestination: destination => this.handleSetDestination(destination),
-    clearDestination: () => this.handleClearDestination(),
-    setAlert: alert => this.handleSetAlert(alert),
-    hideAlert: () => this.handleHideAlert(),
-    setScreen: screen => this.handleSetScreen(screen),
+    addWaypoint: waypoint => this.addWaypoint(waypoint),
+    changeWaypoint: (i,waypoint) => this.changeWaypoint(i,waypoint),
+    clearLatestWaypoint: () => this.clearLatestWaypoint(),
+    changeDestination: destination => this.changeDestination(destination),
+    skipNextWaypoint: () => this.skipNextWaypoint(),
+    setAlert: alert => this.setAlert(alert),
+    hideAlert: () => this.hideAlert(),
+    setScreen: screen => this.setScreen(screen),
+    finishRoute: () => this.finishRoute(),
   };
 
   componentDidMount() {
@@ -37,36 +42,94 @@ export default class App extends React.Component {
   componentDidUpdate = prevProps => {
     if (this.state.destination) {
       if (prevProps.location != this.props.location) {
-        this.setDistance();
+        this.setDistanceToNextWaypoint()
       }
     }
   };
 
-  handleSetDestination = async destination => {
+  addWaypoint = async waypoint => {
+    const length = this.state.waypoints.length
+    if (length == 0 && !this.state.destination) {
+      await this.setState({ destination: waypoint })
+    } else if (length < 10 && this.state.destination) {
+      const destination = this.state.destination
+      let waypoints = this.state.waypoints
+      waypoints.push(destination)
+      await this.setState({ waypoints, destination: waypoint })
+    } else if (length >= 10) {
+      this.setAlert("Maximum 10 waypoints allowed")
+    }
+    this.setDistanceToNextWaypoint()
+  }
+
+  changeWaypoint = (i,waypoint) => {
+    let waypoints = this.state.waypoints
+    waypoints[i] = waypoint
+    this.setState({ waypoints })
+    if (i == 0) {
+      this.setDistanceToNextWaypoint()
+    }
+    // force update of route polylines by slightly modifying destination coords (DIRTY!!)
+    let destination = this.state.destination
+    destination = [destination[0], destination[1]+0.00001]
+    this.setState({destination})
+  }
+  
+  clearLatestWaypoint = () => {
+    if (this.state.waypoints.length > 0) {
+      let waypoints = this.state.waypoints
+      this.setState({ destination: waypoints.slice(-1)[0] })
+      waypoints.pop()
+      this.setState({ waypoints })
+    } else {
+      this.setState({ destination: null})
+    }
+  }
+
+  skipNextWaypoint = () => {
+    if (this.state.waypoints.length > 0) {
+      let waypoints = this.state.waypoints
+      waypoints.shift()
+      this.setState({ waypoints })
+      this.setDistanceToNextWaypoint()
+    } else {
+      this.setState({ destination: null})
+      this.setState({ distanceToNextWaypoint: 0 })
+    }
+  }
+
+  changeDestination = async destination => {
     await this.setState({ destination });
-    this.setDistance();
+    this.setDistanceToNextWaypoint()
   };
 
-  setDistance = async () => {
-    let distanceM = await Geolib.getDistance(
+  setDistanceToNextWaypoint = () => {
+    let nextWaypoint
+    if (this.state.waypoints.length > 0) {
+      nextWaypoint = this.state.waypoints[0]
+    } else {
+      nextWaypoint = this.state.destination
+    }
+    let distanceM = Geolib.getDistance(
       {
         latitude: this.state.location[0],
         longitude: this.state.location[1],
       },
       {
-        latitude: this.state.destination[0],
-        longitude: this.state.destination[1],
+        latitude: nextWaypoint[0],
+        longitude: nextWaypoint[1],
       },
-    );
-    let distance = (distanceM / 1000).toFixed(2);
-    this.setState({ distance })
-  };
+    )
+    let distanceToNextWaypoint = (distanceM / 1000).toFixed(2);
+    this.setState({ distanceToNextWaypoint })
+  }
 
-  handleClearDestination = () => {
-    this.setState({ destination: null });
-  };
+  finishRoute = () => {
+    this.setState({ destination: null, waypoints: [] })
+    this.setScreen("Map")
+  }
 
-  handleHideAlert = () => {
+  hideAlert = () => {
     if (this.state.alert) {
       this.hideAlertAnimation();
       setTimeout(() => {
@@ -75,12 +138,12 @@ export default class App extends React.Component {
     }
   };
 
-  handleSetAlert = alert => {
+  setAlert = alert => {
     if (!this.state.alert) {
       this.setState({ alert });
       this.showAlertAnimation()
       setTimeout(() => {
-        this.handleHideAlert();
+        this.hideAlert();
       }, 2000);
     }
   };
@@ -99,7 +162,7 @@ export default class App extends React.Component {
     }).start();
   };
 
-  handleSetScreen = screen => {
+  setScreen = screen => {
     if (screen == "Compass") {this.compassScreenTransition()}
     if (screen == "Map") {this.mapScreenTransition()}
   };
@@ -157,11 +220,11 @@ export default class App extends React.Component {
     ]);
   };
 
-  handleLoadingError = error => {
+  loadingError = error => {
     Sentry.captureException(new Error(error));
   };
 
-  handleFinishLoading = () => {
+  finishLoading = () => {
     this.setState({ loadingComplete: true });
   };
 
@@ -170,8 +233,8 @@ export default class App extends React.Component {
       return (
         <AppLoading
           startAsync={this.loadResourcesAsync}
-          onError={this.handleLoadingError}
-          onFinish={this.handleFinishLoading}
+          onError={this.loadingError}
+          onFinish={this.finishLoading}
         />
       );
     } else {
