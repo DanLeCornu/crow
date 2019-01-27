@@ -106,6 +106,7 @@ class MapScreen extends React.Component {
               <LoadingText>fetching your location ...</LoadingText>
                 <NQ onPress={() => Linking.openURL('https://www.noquarter.co')}>
                   a <NQLogo source={require('../../assets/images/nq_logo.png')} /> production
+                  v0.1
                 </NQ>
             </LoadingContainer>
           </>
