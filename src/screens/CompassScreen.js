@@ -8,7 +8,7 @@ import AppContext from '../AppContext';
 class CompassScreen extends React.Component {
 
   render() {
-    const { distance } = this.props;
+    const { distanceToNextWaypoint, skipNextWaypoint, waypoints, finishRoute } = this.props;
 
     return (
       <Container>
@@ -17,11 +17,16 @@ class CompassScreen extends React.Component {
         </CompassContainer>
         <DistanceContainer>
           <Distance>
-            <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+            <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
           </Distance>
         </DistanceContainer>
-        <MapButton onPress={() => this.props.setScreen('Map')}>
-          <MapButtonText>CHANGE DESTINATION</MapButtonText>
+        {waypoints.length > 0 &&
+          <SkipButton onPress={() => skipNextWaypoint()}>
+            <ButtonText>SKIP WAYPOINT</ButtonText>
+          </SkipButton>
+        }
+        <MapButton onPress={() => finishRoute()}>
+          <ButtonText>FINISH ROUTE</ButtonText>
         </MapButton>
       </Container>
     );
@@ -43,13 +48,13 @@ const Container = styled(View)`
   height: 100%;
 `
 const CompassContainer = styled(View)`
-  height: 65%;
+  height: 60%;
   width: 100%;
   justify-content: center;
   align-items: center;
 `
 const DistanceContainer = styled(View)`
-  height: 25%;
+  height: 20%;
   width: 100%;
   justify-content: center;
   align-items: center;
@@ -74,7 +79,16 @@ const MapButton = styled(TouchableHighlight)`
   shadow-color: #000;
   shadow-opacity: 0.1;
 `
-const MapButtonText = styled(CustomText)`
+const SkipButton = styled(TouchableHighlight)`
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 10%;
+  background: #fd6477;
+  shadow-color: #000;
+  shadow-opacity: 0.1;
+`
+const ButtonText = styled(CustomText)`
   color: white;
   font-size: 18px;
 `

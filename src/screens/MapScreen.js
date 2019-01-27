@@ -35,13 +35,38 @@ class MapScreen extends React.Component {
     ).start();
   };
 
-  handleSetDestination = e => {
+  handleAddWaypoint = e => {
+    const waypoint = [
+      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
+      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
+    ];
+    this.props.addWaypoint(waypoint);
+    if (!this.props.destination) {
+      this.showActions();      
+    }
+  }
+
+  handleChangeWaypoint = (i,e) => {
+    const waypoint = [
+      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
+      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
+    ];
+    this.props.changeWaypoint(i,waypoint);
+  }
+
+  handleClearLatestWaypoint = async () => {
+    await this.props.clearLatestWaypoint();
+    if (!this.props.destination) {
+      this.hideActions();
+    }
+  }
+
+  handleChangeDestination = e => {
     const destination = [
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
     ];
-    this.props.setDestination(destination);
-    this.showActions();
+    this.props.changeDestination(destination);
   };
 
   showActions = () => {
@@ -49,13 +74,6 @@ class MapScreen extends React.Component {
       toValue: 0,
       duration: 200,
     }).start();
-  };
-
-  handleClearDestination = () => {    
-    this.hideActions();
-    setTimeout(() => {
-      this.props.clearDestination();
-    }, 300);
   };
 
   hideActions = () => {
@@ -69,9 +87,11 @@ class MapScreen extends React.Component {
     const { crowPosition, actionsPosition } = this.state;
     const {
       location,
+      waypoints,
       destination,
       setAlert,
-      distance,
+      distanceToNextWaypoint,
+      setScreen
     } = this.props;
 
     return (
@@ -102,49 +122,64 @@ class MapScreen extends React.Component {
                 longitudeDelta: 0.04,
               }}
               onPress={e => {
-                this.handleSetDestination(e);
+                this.handleAddWaypoint(e);
               }}
             >
-              {destination && (
-                <>
+              {waypoints.length > 0 && waypoints.map((waypoint,i) =>
                   <Marker
+                    key={i}
                     draggable
                     coordinate={{
-                      latitude: destination[0],
-                      longitude: destination[1],
+                      latitude: waypoint[0],
+                      longitude: waypoint[1],
                     }}
                     onDragEnd={e => {
-                      this.handleSetDestination(e);
+                      this.handleChangeWaypoint(i,e);
                     }}
                   />
-                  <MapViewDirections
-                    origin={{ latitude: location[0], longitude: location[1] }}
-                    destination={{
-                      latitude: destination[0],
-                      longitude: destination[1],
-                    }}
-                    apikey={GOOGLE_MAPS_APIKEY}
-                    strokeWidth={3}
-                    strokeColor="#01b3fd"
-                    mode="bicycling"
-                    onError={() => setAlert('Could not calculate route')}
-                  />
-                </>
               )}
+              {destination &&
+                <Marker
+                  draggable
+                  coordinate={{
+                    latitude: destination[0],
+                    longitude: destination[1],
+                  }}
+                  onDragEnd={e => {
+                    this.handleChangeDestination(e);
+                  }}
+                />
+              }
+              {destination &&
+                <MapViewDirections
+                  origin={{ latitude: location[0], longitude: location[1] }}
+                  destination={{
+                    latitude: destination[0],
+                    longitude: destination[1],
+                  }}
+                  waypoints={waypoints}
+                  apikey={GOOGLE_MAPS_APIKEY}
+                  strokeWidth={3}
+                  strokeColor="#01b3fd"
+                  mode="walking"
+                  resetOnChange={false}
+                  onError={() => setAlert('Could not calculate route')}
+                />
+              }
             </Map>
-            {destination && 
+            {destination &&
               <ActionsContainer style={{bottom: actionsPosition}}>
                 <Actions>
                   <ActionsDistanceContainer>
                     <ActionsDistance>
-                      <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+                      <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
                     </ActionsDistance>
                   </ActionsDistanceContainer>
                   <ActionsButtons>
-                    <ButtonReject onPress={() => this.handleClearDestination()}>
+                    <ButtonReject onPress={() => this.handleClearLatestWaypoint()}>
                       <Cross source={require('../../assets/images/cross.png')}/>
                     </ButtonReject>
-                    <ButtonConfirm onPress={() => this.props.setScreen('Compass')}>
+                    <ButtonConfirm onPress={() => setScreen('Compass')}>
                       <Tick source={require('../../assets/images/tick.png')}/>
                     </ButtonConfirm>
                   </ActionsButtons>
