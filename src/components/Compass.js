@@ -28,8 +28,8 @@ class Compass extends React.Component {
   componentDidUpdate = prevProps => { 
     if (prevProps.distanceToNextWaypoint != this.props.distanceToNextWaypoint) {
       this.setBearing();
-      if (this.props.waypoints.length > 0 && this.props.distanceToNextWaypoint <= 0.01) {
-        // auto skip next waypoint when get within 10m
+      if (this.props.waypoints.length > 0 && this.props.distanceToNextWaypoint <= 0.05) {
+        // auto skip next waypoint when get within 50m
         this.props.skipNextWaypoint()
       }
     }

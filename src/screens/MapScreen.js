@@ -11,7 +11,7 @@ import styled from 'styled-components';
 class MapScreen extends React.Component {
   state = {
     crowPosition: new Animated.Value(0),
-    actionsPosition: new Animated.Value(-80),
+    actionsPosition: new Animated.Value(-50),
   };
 
   componentDidMount() {
@@ -42,7 +42,7 @@ class MapScreen extends React.Component {
     ];
     this.props.addWaypoint(waypoint);
     if (!this.props.destination) {
-      this.showActions();      
+      this.showMapActions();      
     }
   }
 
@@ -57,7 +57,7 @@ class MapScreen extends React.Component {
   handleClearLatestWaypoint = async () => {
     await this.props.clearLatestWaypoint();
     if (!this.props.destination) {
-      this.hideActions();
+      this.hideMapActions();
     }
   }
 
@@ -69,19 +69,24 @@ class MapScreen extends React.Component {
     this.props.changeDestination(destination);
   };
 
-  showActions = () => {
+  showMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
       toValue: 0,
       duration: 200,
     }).start();
   };
 
-  hideActions = () => {
+  hideMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
-      toValue: -80,
+      toValue: -50,
       duration: 200,
     }).start();
   };
+
+  handleConfirmRoute = () => {
+    this.props.setScreen('Compass')
+    this.hideMapActions()
+  }
 
   render() {
     const { crowPosition, actionsPosition } = this.state;
@@ -91,7 +96,6 @@ class MapScreen extends React.Component {
       destination,
       setAlert,
       distanceToNextWaypoint,
-      setScreen
     } = this.props;
 
     return (
@@ -105,8 +109,7 @@ class MapScreen extends React.Component {
               />
               <LoadingText>fetching your location ...</LoadingText>
                 <NQ onPress={() => Linking.openURL('https://www.noquarter.co')}>
-                  a <NQLogo source={require('../../assets/images/nq_logo.png')} /> production
-                  v0.1
+                  built by <NQLogo source={require('../../assets/images/nq_logo.png')} /> (v0.1.1)
                 </NQ>
             </LoadingContainer>
           </>
@@ -128,6 +131,7 @@ class MapScreen extends React.Component {
             >
               {waypoints.length > 0 && waypoints.map((waypoint,i) =>
                   <Marker
+                    image={require('../../assets/images/crow_marker.png')}
                     key={i}
                     draggable
                     coordinate={{
@@ -141,6 +145,7 @@ class MapScreen extends React.Component {
               )}
               {destination &&
                 <Marker
+                  image={require('../../assets/images/crow_marker.png')}
                   draggable
                   coordinate={{
                     latitude: destination[0],
@@ -168,25 +173,30 @@ class MapScreen extends React.Component {
                 />
               }
             </Map>
-            {destination &&
-              <ActionsContainer style={{bottom: actionsPosition}}>
-                <Actions>
-                  <ActionsDistanceContainer>
-                    <ActionsDistance>
-                      <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
-                    </ActionsDistance>
-                  </ActionsDistanceContainer>
-                  <ActionsButtons>
-                    <ButtonReject onPress={() => this.handleClearLatestWaypoint()}>
-                      <Cross source={require('../../assets/images/cross.png')}/>
-                    </ButtonReject>
-                    <ButtonConfirm onPress={() => setScreen('Compass')}>
-                      <Tick source={require('../../assets/images/tick.png')}/>
-                    </ButtonConfirm>
-                  </ActionsButtons>
-                </Actions>
-              </ActionsContainer>
-            }
+            <ActionsContainer style={{bottom: actionsPosition}}>
+              {!destination &&
+                <ActionsHeader>Tap the map to set a waypoint</ActionsHeader>
+              }
+              <Actions>
+                <ActionsDistanceContainer>
+                  <ActionsDistance>
+                    <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
+                  </ActionsDistance>
+                </ActionsDistanceContainer>
+                <ActionsButtons>
+                  <ButtonReject onPress={() => this.handleClearLatestWaypoint()}>
+                    {waypoints.length > 0 ? (
+                      <Icon source={require('../../assets/images/undo.png')}/>
+                    ) : (
+                      <Icon source={require('../../assets/images/cross.png')}/>
+                    )}
+                  </ButtonReject>
+                  <ButtonConfirm onPress={() => this.handleConfirmRoute()}>
+                    <Icon source={require('../../assets/images/tick.png')}/>
+                  </ButtonConfirm>
+                </ActionsButtons>
+              </Actions>
+            </ActionsContainer>
           </>
         )}
       </Container>
@@ -211,6 +221,10 @@ const Container = styled(View)`
 const Map = styled(MapView)`
   height: 100%;
 `
+// const CrowMarker = styled(Marker)`
+//   width: 20px;
+//   height: 20px;
+// `
 const ActionsContainer = styled(Animated.View)`
   position: absolute;
   width: 94%;
@@ -221,6 +235,11 @@ const ActionsContainer = styled(Animated.View)`
   border-top-right-radius: 30px;
   shadow-color: #000;
   shadow-opacity: 0.1;
+`
+const ActionsHeader = styled(CustomText)`
+  height: 30px;
+  text-align: center;
+  line-height: 30px;
 `
 const Actions = styled(View)`
   height: 100%;
@@ -266,11 +285,7 @@ const ButtonConfirm = styled(Button)`
 const ButtonReject = styled(Button)`
   background: #fd6477;
 `
-const Cross = styled(Image)`
-  height: 20px;
-  width: 20px;
-`
-const Tick = styled(Image)`
+const Icon = styled(Image)`
   height: 25px;
   width: 25px;
 `
@@ -285,8 +300,8 @@ const LoadingText = styled(CustomText)`
   font-size: 20px;
 `
 const Crow = styled(Animated.Image)`
-  width: 25px;
-  height: 25px;
+  width: 50px;
+  height: 50px;
   margin-right: 10px;
   resize-mode: contain;
 `
@@ -295,11 +310,11 @@ const NQ = styled(CustomText)`
   bottom: 20px;
   width: 100%;
   text-align: center;
-  line-height: 40px;
+  line-height: 25px;
   font-size: 20px;
 `
 const NQLogo = styled(Image)`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 25px;
+  height: 25px;
+  border-radius: 4px;
 `

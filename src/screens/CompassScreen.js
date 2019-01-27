@@ -19,15 +19,18 @@ class CompassScreen extends React.Component {
           <Distance>
             <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
           </Distance>
+          <NextWaypointText>TO NEXT WAYPOINT</NextWaypointText>
         </DistanceContainer>
-        {waypoints.length > 0 &&
-          <SkipButton onPress={() => skipNextWaypoint()}>
-            <ButtonText>SKIP WAYPOINT</ButtonText>
-          </SkipButton>
-        }
-        <MapButton onPress={() => finishRoute()}>
-          <ButtonText>FINISH ROUTE</ButtonText>
-        </MapButton>
+        <Buttons>
+          {waypoints.length > 0 &&
+            <SkipButton onPress={() => skipNextWaypoint()}>
+              <ButtonText>SKIP WAYPOINT</ButtonText>
+            </SkipButton>
+          }
+          <MapButton onPress={() => finishRoute()}>
+            <ButtonText>FINISH ROUTE</ButtonText>
+          </MapButton>
+        </Buttons>
       </Container>
     );
   }
@@ -70,23 +73,30 @@ const UnitText = styled(CustomText)`
   font-size: 18px;
   margin-left: 5px;
 `
-const MapButton = styled(TouchableHighlight)`
+const NextWaypointText = styled(CustomText)`
+  color: grey;
+  font-size: 14px;
+  text-align: center;
+  margin-top: -10px;
+`
+const Buttons = styled(View)`
+  justify-content: flex-end;
+  height: 20%;
+  width: 100%;
+`
+const Button = styled(TouchableHighlight)`
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 10%;
-  background: #fd6477;
+  height: 50%;
   shadow-color: #000;
   shadow-opacity: 0.1;
 `
-const SkipButton = styled(TouchableHighlight)`
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 10%;
+const MapButton = styled(Button)`
   background: #fd6477;
-  shadow-color: #000;
-  shadow-opacity: 0.1;
+`
+const SkipButton = styled(Button)`
+  background: #fdb135;
 `
 const ButtonText = styled(CustomText)`
   color: white;

@@ -12,6 +12,7 @@ Sentry.enableInExpoDevelopment = true;
 Sentry.config(SENTRY_DSN).install();
 
 import styled from 'styled-components';
+import { timer } from 'rxjs';
 
 export default class App extends React.Component {
   state = {
@@ -47,19 +48,21 @@ export default class App extends React.Component {
     }
   };
 
-  addWaypoint = async waypoint => {
-    const length = this.state.waypoints.length
-    if (length == 0 && !this.state.destination) {
-      await this.setState({ destination: waypoint })
-    } else if (length < 10 && this.state.destination) {
-      const destination = this.state.destination
-      let waypoints = this.state.waypoints
-      waypoints.push(destination)
-      await this.setState({ waypoints, destination: waypoint })
-    } else if (length >= 10) {
-      this.setAlert("Maximum 10 waypoints allowed")
-    }
-    this.setDistanceToNextWaypoint()
+  addWaypoint = waypoint => {
+    setTimeout(async () => {      
+      const length = this.state.waypoints.length
+      if (length == 0 && !this.state.destination) {
+        await this.setState({ destination: waypoint })
+      } else if (length < 10 && this.state.destination) {
+        const destination = this.state.destination
+        let waypoints = this.state.waypoints
+        waypoints.push(destination)
+        await this.setState({ waypoints, destination: waypoint })
+      } else if (length >= 10) {
+        this.setAlert("Maximum 10 waypoints allowed")
+      }
+      this.setDistanceToNextWaypoint()
+    }, 100);
   }
 
   changeWaypoint = (i,waypoint) => {
