@@ -8,7 +8,7 @@ import AppContext from '../AppContext';
 class CompassScreen extends React.Component {
 
   render() {
-    const { distanceToNextWaypoint, skipNextWaypoint, waypoints, finishRoute } = this.props;
+    const { distance, finishRoute } = this.props;
 
     return (
       <Container>
@@ -17,16 +17,11 @@ class CompassScreen extends React.Component {
         </CompassContainer>
         <DistanceContainer>
           <Distance>
-            <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
+            <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
           </Distance>
-          <NextWaypointText>TO NEXT WAYPOINT</NextWaypointText>
+          <NextWaypointText>TO DESTINATION</NextWaypointText>
         </DistanceContainer>
         <Buttons>
-          {waypoints.length > 0 &&
-            <SkipButton onPress={() => skipNextWaypoint()}>
-              <ButtonText>SKIP WAYPOINT</ButtonText>
-            </SkipButton>
-          }
           <MapButton onPress={() => finishRoute()}>
             <ButtonText>FINISH ROUTE</ButtonText>
           </MapButton>
@@ -94,9 +89,6 @@ const Button = styled(TouchableHighlight)`
 `
 const MapButton = styled(Button)`
   background: #fd6477;
-`
-const SkipButton = styled(Button)`
-  background: #fdb135;
 `
 const ButtonText = styled(CustomText)`
   color: white;

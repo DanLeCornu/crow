@@ -1,73 +1,29 @@
 import React from 'react';
 import { MapView } from 'expo';
-import { View, Image, Animated, Easing, Linking, TouchableHighlight } from 'react-native';
+import { View, Image, Animated, TouchableHighlight } from 'react-native';
 import { CustomText } from '../components/CustomText'
-import MapViewDirections from 'react-native-maps-directions';
 import { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
-import { GOOGLE_MAPS_APIKEY } from '../../Config';
 import styled from 'styled-components';
 
 class MapScreen extends React.Component {
   state = {
-    crowPosition: new Animated.Value(0),
     actionsPosition: new Animated.Value(-50),
   };
 
-  componentDidMount() {
-    this.bounceCrow();
-  }
-
-  bounceCrow = () => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(this.state.crowPosition, {
-          toValue: -20,
-          duration: 300,
-          easing: Easing.inOut(Easing.ease),
-        }),
-        Animated.timing(this.state.crowPosition, {
-          toValue: 0,
-          duration: 700,
-          easing: Easing.bounce,
-        }),
-      ]),
-    ).start();
-  };
-
-  handleAddWaypoint = e => {
-    const waypoint = [
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-    ];
-    this.props.addWaypoint(waypoint);
-    if (!this.props.destination) {
-      this.showMapActions();      
-    }
-  }
-
-  handleChangeWaypoint = (i,e) => {
-    const waypoint = [
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-    ];
-    this.props.changeWaypoint(i,waypoint);
-  }
-
-  handleClearLatestWaypoint = async () => {
-    await this.props.clearLatestWaypoint();
-    if (!this.props.destination) {
-      this.hideMapActions();
-    }
-  }
-
-  handleChangeDestination = e => {
+  handleSetDestination = e => {
     const destination = [
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
     ];
-    this.props.changeDestination(destination);
+    this.props.setDestination(destination);
+    this.showMapActions();
   };
+
+  handleClearDestination = () => {
+    this.props.clearDestination();
+    this.hideMapActions();
+  }
 
   showMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
@@ -89,116 +45,63 @@ class MapScreen extends React.Component {
   }
 
   render() {
-    const { crowPosition, actionsPosition } = this.state;
+    const { actionsPosition } = this.state;
     const {
       location,
-      waypoints,
       destination,
-      setAlert,
-      distanceToNextWaypoint,
+      distance,
     } = this.props;
 
     return (
       <Container>
-        {!location ? (
-          <>
-            <LoadingContainer>
-              <Crow
-                style={{ transform: [{ translateY: crowPosition }] }}
-                source={require('../../assets/images/crow.png')}
-              />
-              <LoadingText>fetching your location ...</LoadingText>
-                <NQ onPress={() => Linking.openURL('https://www.noquarter.co')}>
-                  built by <NQLogo source={require('../../assets/images/nq_logo.png')} /> (v0.1.1)
-                </NQ>
-            </LoadingContainer>
-          </>
-        ) : (
-          <>
-            <Map
-              showsUserLocation
-              mapType="mutedStandard"
-              showsPointsOfInterest={false}
-              initialRegion={{
-                latitude: location[0],
-                longitude: location[1],
-                latitudeDelta: 0.04,
-                longitudeDelta: 0.04,
+        <Map
+          showsUserLocation
+          mapType="mutedStandard"
+          showsPointsOfInterest={false}
+          initialRegion={{
+            latitude: location[0],
+            longitude: location[1],
+            latitudeDelta: 0.04,
+            longitudeDelta: 0.04,
+          }}
+          onPress={e => {
+            this.handleSetDestination(e);
+          }}
+        >
+          {destination &&
+            <Marker
+              image={require('../../assets/images/crow_marker.png')}
+              draggable
+              coordinate={{
+                latitude: destination[0],
+                longitude: destination[1],
               }}
-              onPress={e => {
-                this.handleAddWaypoint(e);
+              onDragEnd={e => {
+                this.handleSetDestination(e);
               }}
-            >
-              {waypoints.length > 0 && waypoints.map((waypoint,i) =>
-                  <Marker
-                    image={require('../../assets/images/crow_marker.png')}
-                    key={i}
-                    draggable
-                    coordinate={{
-                      latitude: waypoint[0],
-                      longitude: waypoint[1],
-                    }}
-                    onDragEnd={e => {
-                      this.handleChangeWaypoint(i,e);
-                    }}
-                  />
-              )}
-              {destination &&
-                <Marker
-                  image={require('../../assets/images/crow_marker.png')}
-                  draggable
-                  coordinate={{
-                    latitude: destination[0],
-                    longitude: destination[1],
-                  }}
-                  onDragEnd={e => {
-                    this.handleChangeDestination(e);
-                  }}
-                />
-              }
-              {destination &&
-                <MapViewDirections
-                  origin={{ latitude: location[0], longitude: location[1] }}
-                  destination={{
-                    latitude: destination[0],
-                    longitude: destination[1],
-                  }}
-                  waypoints={waypoints}
-                  apikey={GOOGLE_MAPS_APIKEY}
-                  strokeWidth={3}
-                  strokeColor="#01b3fd"
-                  mode="walking"
-                  resetOnChange={false}
-                  onError={() => setAlert('Could not calculate route')}
-                />
-              }
-            </Map>
-            <ActionsContainer style={{bottom: actionsPosition}}>
-              {!destination &&
-                <ActionsHeader>Tap the map to set a waypoint</ActionsHeader>
-              }
-              <Actions>
-                <ActionsDistanceContainer>
-                  <ActionsDistance>
-                    <DistanceText>{distanceToNextWaypoint}</DistanceText><UnitText>KM</UnitText>
-                  </ActionsDistance>
-                </ActionsDistanceContainer>
-                <ActionsButtons>
-                  <ButtonReject onPress={() => this.handleClearLatestWaypoint()}>
-                    {waypoints.length > 0 ? (
-                      <Icon source={require('../../assets/images/undo.png')}/>
-                    ) : (
-                      <Icon source={require('../../assets/images/cross.png')}/>
-                    )}
-                  </ButtonReject>
-                  <ButtonConfirm onPress={() => this.handleConfirmRoute()}>
-                    <Icon source={require('../../assets/images/tick.png')}/>
-                  </ButtonConfirm>
-                </ActionsButtons>
-              </Actions>
-            </ActionsContainer>
-          </>
-        )}
+            />
+          }
+        </Map>
+        <ActionsContainer style={{bottom: actionsPosition}}>
+          {!destination &&
+            <ActionsHeader>Tap the map to set destination</ActionsHeader>
+          }
+          <Actions>
+            <ActionsDistanceContainer>
+              <ActionsDistance>
+                <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+              </ActionsDistance>
+            </ActionsDistanceContainer>
+            <ActionsButtons>
+              <ButtonReject onPress={() => this.handleClearDestination()}>
+                <Icon source={require('../../assets/images/cross.png')}/>
+              </ButtonReject>
+              <ButtonConfirm onPress={() => this.handleConfirmRoute()}>
+                <Icon source={require('../../assets/images/tick.png')}/>
+              </ButtonConfirm>
+            </ActionsButtons>
+          </Actions>
+        </ActionsContainer>
       </Container>
     );
   }
@@ -221,10 +124,6 @@ const Container = styled(View)`
 const Map = styled(MapView)`
   height: 100%;
 `
-// const CrowMarker = styled(Marker)`
-//   width: 20px;
-//   height: 20px;
-// `
 const ActionsContainer = styled(Animated.View)`
   position: absolute;
   width: 94%;
@@ -288,33 +187,4 @@ const ButtonReject = styled(Button)`
 const Icon = styled(Image)`
   height: 25px;
   width: 25px;
-`
-const LoadingContainer = styled(View)`
-  width: 100%;
-  height: 100%;
-  flex-direction: row
-  justify-content: center;;
-  align-items: center;
-`
-const LoadingText = styled(CustomText)`
-  font-size: 20px;
-`
-const Crow = styled(Animated.Image)`
-  width: 50px;
-  height: 50px;
-  margin-right: 10px;
-  resize-mode: contain;
-`
-const NQ = styled(CustomText)`
-  position: absolute;
-  bottom: 20px;
-  width: 100%;
-  text-align: center;
-  line-height: 25px;
-  font-size: 20px;
-`
-const NQLogo = styled(Image)`
-  width: 25px;
-  height: 25px;
-  border-radius: 4px;
 `

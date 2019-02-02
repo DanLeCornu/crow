@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StatusBar, Animated, Dimensions } from 'react-native';
+import { Platform, StatusBar, Animated, Easing, Dimensions, Linking, Image } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
@@ -12,7 +12,6 @@ Sentry.enableInExpoDevelopment = true;
 Sentry.config(SENTRY_DSN).install();
 
 import styled from 'styled-components';
-import { timer } from 'rxjs';
 
 export default class App extends React.Component {
   state = {
@@ -20,15 +19,12 @@ export default class App extends React.Component {
     loadingComplete: false,
     location: null,
     destination: null,
-    distanceToNextWaypoint: 0,
-    waypoints: [],
+    distance: 0,
+    crowPosition: new Animated.Value(0),
     screenPosition: new Animated.Value(0),
     alertPosition: new Animated.Value(-40),
-    addWaypoint: waypoint => this.addWaypoint(waypoint),
-    changeWaypoint: (i,waypoint) => this.changeWaypoint(i,waypoint),
-    clearLatestWaypoint: () => this.clearLatestWaypoint(),
-    changeDestination: destination => this.changeDestination(destination),
-    skipNextWaypoint: () => this.skipNextWaypoint(),
+    setDestination: destination => this.setDestination(destination),
+    clearDestination: () => this.clearDestination(),
     setAlert: alert => this.setAlert(alert),
     hideAlert: () => this.hideAlert(),
     setScreen: screen => this.setScreen(screen),
@@ -36,6 +32,7 @@ export default class App extends React.Component {
   };
 
   componentDidMount() {
+    this.bounceCrow();
     this.requestPermissions();
     this.subscribeToLocation();
   }
@@ -43,92 +40,54 @@ export default class App extends React.Component {
   componentDidUpdate = (prevProps, prevState) => {
     if (this.state.destination) {
       if (prevState.location != this.state.location) {
-        this.setDistanceToNextWaypoint()
+        this.setDistance()
       }
     }
   };
 
-  addWaypoint = waypoint => {
-    setTimeout(async () => {      
-      const length = this.state.waypoints.length
-      if (length == 0 && !this.state.destination) {
-        await this.setState({ destination: waypoint })
-      } else if (length < 10 && this.state.destination) {
-        const destination = this.state.destination
-        let waypoints = this.state.waypoints
-        waypoints.push(destination)
-        await this.setState({ waypoints, destination: waypoint })
-      } else if (length >= 10) {
-        this.setAlert("Maximum 10 waypoints allowed")
-      }
-      this.setDistanceToNextWaypoint()
-    }, 100);
-  }
+  bounceCrow = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(this.state.crowPosition, {
+          toValue: -20,
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(this.state.crowPosition, {
+          toValue: 0,
+          duration: 700,
+          easing: Easing.bounce,
+        }),
+      ]),
+    ).start();
+  };
 
-  changeWaypoint = (i,waypoint) => {
-    let waypoints = this.state.waypoints
-    waypoints[i] = waypoint
-    this.setState({ waypoints })
-    if (i == 0) {
-      this.setDistanceToNextWaypoint()
-    }
-    // force update of route polylines by slightly modifying destination coords (DIRTY!!)
-    let destination = this.state.destination
-    destination = [destination[0], destination[1]+0.00001]
-    this.setState({destination})
-  }
-  
-  clearLatestWaypoint = () => {
-    if (this.state.waypoints.length > 0) {
-      let waypoints = this.state.waypoints
-      this.setState({ destination: waypoints.slice(-1)[0] })
-      waypoints.pop()
-      this.setState({ waypoints })
-    } else {
-      this.setState({ destination: null})
-    }
-  }
-
-  skipNextWaypoint = () => {
-    if (this.state.waypoints.length > 0) {
-      let waypoints = this.state.waypoints
-      waypoints.shift()
-      this.setState({ waypoints })
-      this.setDistanceToNextWaypoint()
-    } else {
-      this.setState({ destination: null})
-      this.setState({ distanceToNextWaypoint: 0 })
-    }
-  }
-
-  changeDestination = async destination => {
+  setDestination = async destination => {
     await this.setState({ destination });
-    this.setDistanceToNextWaypoint()
+    this.setDistance()
   };
 
-  setDistanceToNextWaypoint = () => {
-    let nextWaypoint
-    if (this.state.waypoints.length > 0) {
-      nextWaypoint = this.state.waypoints[0]
-    } else {
-      nextWaypoint = this.state.destination
-    }
+  clearDestination = () => {
+    this.setState({ destination: null })
+  }
+
+  setDistance = () => {
     let distanceM = Geolib.getDistance(
       {
         latitude: this.state.location[0],
         longitude: this.state.location[1],
       },
       {
-        latitude: nextWaypoint[0],
-        longitude: nextWaypoint[1],
+        latitude: this.state.destination[0],
+        longitude: this.state.destination[1],
       },
     )
-    let distanceToNextWaypoint = (distanceM / 1000).toFixed(2);
-    this.setState({ distanceToNextWaypoint })
+    let distance = (distanceM / 1000).toFixed(2);
+    this.setState({ distance })
   }
 
   finishRoute = () => {
-    this.setState({ destination: null, waypoints: [] })
+    this.setState({ destination: null })
     this.setScreen("Map")
   }
 
@@ -241,20 +200,33 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { screenPosition, alert, alertPosition } = this.state;
+      const { location, crowPosition, screenPosition, alert, alertPosition } = this.state;
       const screenHeight = Dimensions.get('window').height - 20
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
-            <AlertContainer style={{top: alertPosition}}>
-              <Alert>{alert}</Alert>
-            </AlertContainer>
-            <MapScreen />
-            {this.state.destination &&
-              <CompassScreen />
-            }
-          </ScreenContainer>
+          {!location ? (
+            <LoadingContainer>
+              <Crow
+                style={{ transform: [{ translateY: crowPosition }] }}
+                source={require('../assets/images/crow.png')}
+              />
+              <LoadingText>fetching your location ...</LoadingText>
+                <NQ onPress={() => Linking.openURL('https://www.noquarter.co')}>
+                  built by <NQLogo source={require('../assets/images/nq_logo.png')} /> (v0.1.1)
+                </NQ>
+            </LoadingContainer>
+          ) : (
+            <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
+              <AlertContainer style={{top: alertPosition}}>
+                <Alert>{alert}</Alert>
+              </AlertContainer>
+              <MapScreen />
+              {this.state.destination &&
+                <CompassScreen />
+              }
+            </ScreenContainer>
+          )}
         </AppContext.Provider>
       );
     }
@@ -283,4 +255,33 @@ const Alert = styled(CustomText)`
   line-height: 40px;
   text-align: center;
   font-size: 16px;
+`
+const LoadingContainer = styled.View`
+  width: 100%;
+  height: 100%;
+  flex-direction: row
+  justify-content: center;;
+  align-items: center;
+`
+const LoadingText = styled(CustomText)`
+  font-size: 20px;
+`
+const Crow = styled(Animated.Image)`
+  width: 50px;
+  height: 50px;
+  margin-right: 10px;
+  resize-mode: contain;
+`
+const NQ = styled(CustomText)`
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  line-height: 25px;
+  font-size: 20px;
+`
+const NQLogo = styled(Image)`
+  width: 25px;
+  height: 25px;
+  border-radius: 4px;
 `

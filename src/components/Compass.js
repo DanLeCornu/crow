@@ -28,10 +28,6 @@ class Compass extends React.Component {
   componentDidUpdate = prevProps => { 
     if (prevProps.distanceToNextWaypoint != this.props.distanceToNextWaypoint) {
       this.setBearing();
-      if (this.props.waypoints.length > 0 && this.props.distanceToNextWaypoint <= 0.05) {
-        // auto skip next waypoint when get within 50m
-        this.props.skipNextWaypoint()
-      }
     }
   };
 
@@ -60,17 +56,11 @@ class Compass extends React.Component {
   };
 
   setBearing = () => {
-    let nextWaypoint
-    if (this.props.waypoints.length > 0) {
-      nextWaypoint = this.props.waypoints[0]
-    } else {
-      nextWaypoint = this.props.destination
-    }
     let bearing = this.bearing(
       this.props.location[0],
       this.props.location[1],
-      nextWaypoint[0],
-      nextWaypoint[1],
+      this.props.destination[0],
+      this.props.destination[1],
     );
     this.setState({ bearing });
   };
