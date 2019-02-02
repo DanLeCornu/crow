@@ -174,10 +174,10 @@ export default class App extends React.Component {
         require('../assets/images/compass.png'),
         require('../assets/images/arrow.png'),
         require('../assets/images/nq_logo.png'),
+        require('../assets/images/crow_marker.png'),
       ]),
       Font.loadAsync({
         'open-sans': require('../assets/fonts/OpenSans-Regular.ttf'),
-        'open-sans-bold': require('../assets/fonts/OpenSans-Bold.ttf'),
       }),
     ]);
   };
