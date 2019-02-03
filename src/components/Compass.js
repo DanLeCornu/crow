@@ -1,8 +1,10 @@
 import React from 'react';
 import { Animated, Text } from 'react-native';
 import { Location } from 'expo';
-import styled from 'styled-components';
+import { throttle } from '../lib/helpers'
 import AppContext from '../AppContext';
+
+import styled from 'styled-components';
 
 class Compass extends React.Component {
   state = {
@@ -13,7 +15,7 @@ class Compass extends React.Component {
     arrowRotation: new Animated.Value(0),
   };
 
-  componentWillMount = () => {
+  componentWillMount() {
     this.subscribeToHeading();
     if (this.props.destination) {
       this.setBearing();
@@ -26,8 +28,9 @@ class Compass extends React.Component {
     this.state.headingSubscription.remove();
   }
 
-  componentDidUpdate = (prevProps, prevState) => { 
+  componentDidUpdate = (prevProps, prevState) => {
     if (prevState.heading != this.state.heading) {
+      console.log('update!');
       this.setBearing();
       this.setCompassRotation();
       this.setArrowRotation();
@@ -37,7 +40,7 @@ class Compass extends React.Component {
   subscribeToHeading = async () => {
     let headingSubscription = await Location.watchHeadingAsync(data => {
       let heading = Math.ceil(data.trueHeading);
-      this.setState({ heading });
+      throttle(this.setState({ heading }), 1000);
     });
     this.setState({ headingSubscription });
   };
@@ -107,8 +110,6 @@ class Compass extends React.Component {
           style={{ transform: [{ rotate: arrowRotation }] }}
           source={require('../../assets/images/arrow.png')}
         />
-        {/* <Text>{compassRotation}</Text>
-        <Text>{arrowRotation}</Text> */}
       </>
     );
   }
