@@ -24,10 +24,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
+      "bundleIdentifier": "co.noQuarter.crow",
+      "buildNumber": "1.0.0",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
       }
+    },
+    "android": {
+      "package": "co.noQuarter.crow",
+      "versionCode": 1
     },
     "description": "Simple \"As the crow flies\" bike navigation app"
   }
