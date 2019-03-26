@@ -25,21 +25,9 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map"
+        "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
       }
     },
-    "description": "Simple \"As the crow flies\" navigation app",
-    "hooks": {
-      "postPublish": [
-        {
-          "file": "sentry-expo/upload-sourcemaps",
-          "config": {
-            "organization": "no-quarter-co",
-            "project": "crow",
-            "authToken": "ae2cebc5ea264196aa6089cd5501b771dc228c9913c54278a0c72925c31b0943"
-          }
-        }
-      ]
-    }
+    "description": "Simple \"As the crow flies\" bike navigation app",
   }
 }
