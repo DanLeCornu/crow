@@ -55,7 +55,7 @@ class MapScreen extends React.Component {
     return (
       <Container>
         
-        <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co')}>
+        <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co/privacy/crow')}>
           <PrivacyButtonImage source={require('../../assets/images/privacy_button.png')} />
         </PrivacyButton>
         <Map
