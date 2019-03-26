@@ -11,8 +11,8 @@ class Compass extends React.Component {
     headingSubscription: null,
     heading: null,
     bearing: null,
-    compassRotation: new Animated.Value(0),
-    arrowRotation: new Animated.Value(0),
+    compassRotation: null,
+    arrowRotation: null,
   };
 
   componentWillMount() {
@@ -41,59 +41,19 @@ class Compass extends React.Component {
       throttle(data => {
         let heading = Math.ceil(data.trueHeading);
         this.setState({ heading })
-      },10)
+      },25)
     );
     this.setState({ headingSubscription });
   };
 
   setArrowRotation = () => {
-    let current = parseInt(JSON.stringify(this.state.arrowRotation))
-    let target = this.state.bearing - this.state.heading;
-    if (target < 0) {
-      target += 360
-    }
-    let dif = current - target
-
-    // console.log('current', current);
-    // console.log('target', target);
-    // console.log('diff', current - target);
-    
-    let highDifference = false
-    if (dif >= 180 || dif <= -180) {
-      highDifference = true
-    }
-    // if differential is too high between animations, don't animate
-    if (highDifference) {
-      // console.log('HIGH DIFF');
-      
-      this.setState({arrowRotation: new Animated.Value(target)})
-    } else {
-      Animated.spring(this.state.arrowRotation, {
-        toValue: target,
-        duration: 500,
-      }).start()
-    }
+    const target = this.state.bearing - this.state.heading;
+    this.setState({arrowRotation: target})
   };
 
   setCompassRotation = () => {
-    let current = parseInt(JSON.stringify(this.state.compassRotation))
-    let target = 360 - this.state.heading;
-    if (target < 0) {
-      target += 360
-    }
-    let dif = current - target
-    let highDifference = false
-    if (dif >= 180 || dif <= -180) {
-      highDifference = true
-    }
-    if (highDifference) {
-      this.setState({compassRotation: new Animated.Value(target)})
-    } else {
-      Animated.spring(this.state.compassRotation, {
-        toValue: target,
-        duration: 500,
-      }).start()
-    }
+    const target = 360 - this.state.heading;
+    this.setState({compassRotation: target})
   };
 
   setBearing = () => {
@@ -130,23 +90,15 @@ class Compass extends React.Component {
   };
 
   render() {
-    const compassRotation = this.state.compassRotation.interpolate({
-      inputRange: [0,360],
-      outputRange: ['0deg', '360deg']
-    })
-    const arrowRotation = this.state.arrowRotation.interpolate({
-      inputRange: [0,360],
-      outputRange: ['0deg', '360deg']
-    })
-
+    const { compassRotation, arrowRotation } = this.state
     return (
       <>
         <CompassImage
-          style={{ transform: [{ rotate: compassRotation }] }}
+          style={{ transform: [{ rotate: compassRotation + 'deg' }] }}
           source={require('../../assets/images/compass.png')}
         />
         <Arrow
-          style={{ transform: [{ rotate: arrowRotation }] }}
+          style={{ transform: [{ rotate: arrowRotation + 'deg' }] }}
           source={require('../../assets/images/arrow.png')}
         />
       </>

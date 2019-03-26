@@ -1,15 +1,11 @@
 import React from 'react';
-import { Platform, StatusBar, Animated, Easing, Dimensions, Linking, Image } from 'react-native';
+import { Platform, StatusBar, Animated, Easing, Dimensions } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
 import { CustomText } from './components/CustomText'
 import Geolib from 'geolib';
-import Sentry from 'sentry-expo';
-import { SENTRY_DSN } from '../Config';
-Sentry.enableInExpoDevelopment = true;
-Sentry.config(SENTRY_DSN).install();
 
 import styled from 'styled-components';
 
@@ -173,7 +169,6 @@ export default class App extends React.Component {
         require('../assets/images/crow.png'),
         require('../assets/images/compass.png'),
         require('../assets/images/arrow.png'),
-        require('../assets/images/nq_logo.png'),
         require('../assets/images/crow_marker.png'),
       ]),
       Font.loadAsync({
@@ -183,7 +178,7 @@ export default class App extends React.Component {
   };
 
   loadingError = error => {
-    Sentry.captureException(new Error(error));
+    console.log(error);
   };
 
   finishLoading = () => {
@@ -212,9 +207,6 @@ export default class App extends React.Component {
                 source={require('../assets/images/crow.png')}
               />
               <LoadingText>fetching your location ...</LoadingText>
-                <NQ onPress={() => Linking.openURL('https://www.noquarter.co')}>
-                  built by <NQLogo source={require('../assets/images/nq_logo.png')} /> (v0.1.1)
-                </NQ>
             </LoadingContainer>
           ) : (
             <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
@@ -271,17 +263,4 @@ const Crow = styled(Animated.Image)`
   height: 50px;
   margin-right: 10px;
   resize-mode: contain;
-`
-const NQ = styled(CustomText)`
-  position: absolute;
-  bottom: 20px;
-  width: 100%;
-  text-align: center;
-  line-height: 25px;
-  font-size: 20px;
-`
-const NQLogo = styled(Image)`
-  width: 25px;
-  height: 25px;
-  border-radius: 4px;
 `
