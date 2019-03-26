@@ -170,6 +170,7 @@ export default class App extends React.Component {
         require('../assets/images/compass.png'),
         require('../assets/images/arrow.png'),
         require('../assets/images/crow_marker.png'),
+        require('../assets/images/privacy_button.png'),
       ]),
       Font.loadAsync({
         'open-sans': require('../assets/fonts/OpenSans-Regular.ttf'),

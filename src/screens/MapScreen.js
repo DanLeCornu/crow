@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapView } from 'expo';
-import { View, Image, Animated, TouchableHighlight } from 'react-native';
+import { View, Image, Animated, TouchableHighlight, Linking } from 'react-native';
 import { CustomText } from '../components/CustomText'
 import { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
@@ -54,6 +54,10 @@ class MapScreen extends React.Component {
 
     return (
       <Container>
+        
+        <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co')}>
+          <PrivacyButtonImage source={require('../../assets/images/privacy_button.png')} />
+        </PrivacyButton>
         <Map
           showsUserLocation
           mapType="mutedStandard"
@@ -187,4 +191,14 @@ const ButtonReject = styled(Button)`
 const Icon = styled(Image)`
   height: 25px;
   width: 25px;
+`
+const PrivacyButton = styled(TouchableHighlight)`
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  left: 10px;
+`
+const PrivacyButtonImage = styled(Image)`
+  width: 40px;
+  height: 40px;
 `
