@@ -1,7 +1,7 @@
 import React from 'react';
-import { Animated, Text } from 'react-native';
+import { Animated } from 'react-native';
 import { Location } from 'expo';
-import { throttle } from '../lib/helpers'
+import throttle from 'lodash.throttle'
 import AppContext from '../AppContext';
 
 import styled from 'styled-components';
@@ -30,7 +30,6 @@ class Compass extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     if (prevState.heading != this.state.heading) {
-      console.log('update!');
       this.setBearing();
       this.setCompassRotation();
       this.setArrowRotation();
@@ -38,29 +37,63 @@ class Compass extends React.Component {
   };
 
   subscribeToHeading = async () => {
-    let headingSubscription = await Location.watchHeadingAsync(data => {
-      let heading = Math.ceil(data.trueHeading);
-      throttle(this.setState({ heading }), 1000);
-    });
+    let headingSubscription = await Location.watchHeadingAsync(
+      throttle(data => {
+        let heading = Math.ceil(data.trueHeading);
+        this.setState({ heading })
+      },10)
+    );
     this.setState({ headingSubscription });
   };
 
   setArrowRotation = () => {
-    let arrowRotation = this.state.bearing - this.state.heading;
-    if (arrowRotation > 360) arrowRotation -= 360;
-    if (arrowRotation < 0) arrowRotation += 360;
-    Animated.spring(this.state.arrowRotation, {
-      toValue: arrowRotation,
-      duration: 500,
-    }).start()
+    let current = parseInt(JSON.stringify(this.state.arrowRotation))
+    let target = this.state.bearing - this.state.heading;
+    if (target < 0) {
+      target += 360
+    }
+    let dif = current - target
+
+    // console.log('current', current);
+    // console.log('target', target);
+    // console.log('diff', current - target);
+    
+    let highDifference = false
+    if (dif >= 180 || dif <= -180) {
+      highDifference = true
+    }
+    // if differential is too high between animations, don't animate
+    if (highDifference) {
+      // console.log('HIGH DIFF');
+      
+      this.setState({arrowRotation: new Animated.Value(target)})
+    } else {
+      Animated.spring(this.state.arrowRotation, {
+        toValue: target,
+        duration: 500,
+      }).start()
+    }
   };
 
   setCompassRotation = () => {
-    let compassRotation = 360 - this.state.heading;
-    Animated.spring(this.state.compassRotation, {
-      toValue: compassRotation,
-      duration: 500,
-    }).start()
+    let current = parseInt(JSON.stringify(this.state.compassRotation))
+    let target = 360 - this.state.heading;
+    if (target < 0) {
+      target += 360
+    }
+    let dif = current - target
+    let highDifference = false
+    if (dif >= 180 || dif <= -180) {
+      highDifference = true
+    }
+    if (highDifference) {
+      this.setState({compassRotation: new Animated.Value(target)})
+    } else {
+      Animated.spring(this.state.compassRotation, {
+        toValue: target,
+        duration: 500,
+      }).start()
+    }
   };
 
   setBearing = () => {
@@ -97,8 +130,14 @@ class Compass extends React.Component {
   };
 
   render() {
-    const compassRotation = JSON.stringify(this.state.compassRotation) + 'deg'
-    const arrowRotation = JSON.stringify(this.state.arrowRotation) + 'deg'
+    const compassRotation = this.state.compassRotation.interpolate({
+      inputRange: [0,360],
+      outputRange: ['0deg', '360deg']
+    })
+    const arrowRotation = this.state.arrowRotation.interpolate({
+      inputRange: [0,360],
+      outputRange: ['0deg', '360deg']
+    })
 
     return (
       <>
