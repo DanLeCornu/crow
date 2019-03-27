@@ -11,7 +11,6 @@
     ],
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app_icon.png",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
@@ -24,6 +23,7 @@
       "**/*"
     ],
     "ios": {
+      "icon": "./assets/images/ios_icon.png",
       "bundleIdentifier": "co.noQuarter.crow",
       "buildNumber": "1.0.0",
       "infoPlist": {
@@ -31,6 +31,7 @@
       }
     },
     "android": {
+      "icon": "./assets/images/android_icon.png",
       "package": "co.noQuarter.crow",
       "versionCode": 1
     },
