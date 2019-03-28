@@ -255,6 +255,7 @@ const LoadingContainer = styled.View`
   flex-direction: row
   justify-content: center;;
   align-items: center;
+  background: white;
 `
 const LoadingText = styled(CustomText)`
   font-size: 20px;
