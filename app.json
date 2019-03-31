@@ -31,7 +31,10 @@
       }
     },
     "android": {
-      "permissions": [],
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
       "icon": "./assets/images/android_icon.png",
       "package": "co.noQuarter.crow",
       "versionCode": 2
