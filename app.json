@@ -37,7 +37,7 @@
       ],
       "icon": "./assets/images/android_icon.png",
       "package": "co.noQuarter.crow",
-      "versionCode": 2
+      "versionCode": 3
     },
     "description": "Simple \"As the crow flies\" bike navigation app"
   }
