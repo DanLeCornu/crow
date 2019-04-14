@@ -9,7 +9,7 @@
       "ios",
       "android"
     ],
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -25,7 +25,7 @@
     "ios": {
       "icon": "./assets/images/ios_icon.png",
       "bundleIdentifier": "co.noQuarter.crow",
-      "buildNumber": "1.0.0",
+      "buildNumber": "1.0.1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
       }
