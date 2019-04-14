@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StatusBar, Animated, Easing, Dimensions } from 'react-native';
+import { Platform, StatusBar, Animated, Easing, Dimensions, NativeModules } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
@@ -11,6 +11,7 @@ import styled from 'styled-components';
 
 export default class App extends React.Component {
   state = {
+    screenHeight: 0,
     alert: null,
     loadingComplete: false,
     location: null,
@@ -28,9 +29,10 @@ export default class App extends React.Component {
   };
 
   componentDidMount() {
-    this.bounceCrow();
-    this.requestPermissions();
-    this.subscribeToLocation();
+    this.setScreenHeight()
+    this.bounceCrow()
+    this.requestPermissions()
+    this.subscribeToLocation()
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -40,6 +42,13 @@ export default class App extends React.Component {
       }
     }
   };
+
+  setScreenHeight = () => {
+    NativeModules.StatusBarManager.getHeight((statusBarManager) => {
+      const screenHeight = Dimensions.get('window').height - statusBarManager.height
+      this.setState({screenHeight})
+    })
+  }
 
   bounceCrow = () => {
     Animated.loop(
@@ -196,8 +205,7 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { location, crowPosition, screenPosition, alert, alertPosition } = this.state;
-      const screenHeight = Dimensions.get('window').height - 20
+      const { screenHeight, location, crowPosition, screenPosition, alert, alertPosition } = this.state;
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
@@ -229,8 +237,10 @@ export default class App extends React.Component {
 const ScreenContainer = styled(Animated.View)`
   width: 200%;
   flex-wrap: wrap;
-  margin-top: 20px;
+  height: ${props => `${props.height}px`};
   overflow: hidden;
+  position: absolute;
+  bottom: 0;
 `
 const AlertContainer = styled(Animated.View)`
   position: absolute;
