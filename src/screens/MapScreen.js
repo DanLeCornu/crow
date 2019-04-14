@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapView } from 'expo';
-import { View, Image, Animated, TouchableHighlight, Linking } from 'react-native';
+import { View, Image, Animated, TouchableHighlight, Linking, Dimensions } from 'react-native';
 import { CustomText } from '../components/CustomText'
 import { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
@@ -8,7 +8,8 @@ import styled from 'styled-components';
 
 class MapScreen extends React.Component {
   state = {
-    actionsPosition: new Animated.Value(-50),
+    actionsPosition: new Animated.Value(-80),
+    markerWidth: Dimensions.get('window').width * 0.10
   };
 
   handleSetDestination = e => {
@@ -34,7 +35,7 @@ class MapScreen extends React.Component {
 
   hideMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
-      toValue: -50,
+      toValue: -80,
       duration: 200,
     }).start();
   };
@@ -45,18 +46,19 @@ class MapScreen extends React.Component {
   }
 
   render() {
-    const { actionsPosition } = this.state;
+    const { actionsPosition, markerWidth } = this.state;
     const {
       location,
       destination,
       distance,
+      theme,
     } = this.props;
 
     return (
       <Container>
         
         <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co/privacy/crow')}>
-          <PrivacyButtonImage source={require('../../assets/images/privacy_button.png')} />
+          <PrivacyButtonImage source={require('../../assets/images/privacyButton.png')} />
         </PrivacyButton>
         <Map
           showsUserLocation
@@ -74,7 +76,6 @@ class MapScreen extends React.Component {
         >
           {destination &&
             <Marker
-              image={require('../../assets/images/crow_marker.png')}
               draggable
               coordinate={{
                 latitude: destination[0],
@@ -83,13 +84,15 @@ class MapScreen extends React.Component {
               onDragEnd={e => {
                 this.handleSetDestination(e);
               }}
-            />
+            >
+              <MarkerIcon
+                source={require('../../assets/images/crow.png')}
+                width={markerWidth}
+              />
+            </Marker>
           }
         </Map>
         <ActionsContainer style={{bottom: actionsPosition}}>
-          {!destination &&
-            <ActionsHeader>Tap the map to set destination</ActionsHeader>
-          }
           <Actions>
             <ActionsDistanceContainer>
               <ActionsDistance>
@@ -97,11 +100,8 @@ class MapScreen extends React.Component {
               </ActionsDistance>
             </ActionsDistanceContainer>
             <ActionsButtons>
-              <ButtonReject onPress={() => this.handleClearDestination()}>
-                <Icon source={require('../../assets/images/cross.png')}/>
-              </ButtonReject>
-              <ButtonConfirm onPress={() => this.handleConfirmRoute()}>
-                <Icon source={require('../../assets/images/tick.png')}/>
+              <ButtonConfirm background={theme} onPress={() => this.handleConfirmRoute()}>
+                <ButtonIcon source={require('../../assets/images/navigateArrow.png')}/>
               </ButtonConfirm>
             </ActionsButtons>
           </Actions>
@@ -130,19 +130,9 @@ const Map = styled(MapView)`
 `
 const ActionsContainer = styled(Animated.View)`
   position: absolute;
-  width: 94%;
+  width: 100%;
   height: 80px;
-  margin: 0 3% 0 3%;
   background: white;
-  border-top-left-radius: 30px;
-  border-top-right-radius: 30px;
-  shadow-color: #000;
-  shadow-opacity: 0.1;
-`
-const ActionsHeader = styled(CustomText)`
-  height: 30px;
-  text-align: center;
-  line-height: 30px;
 `
 const Actions = styled(View)`
   height: 100%;
@@ -162,16 +152,18 @@ const ActionsDistance = styled(View)`
 `
 const DistanceText = styled(CustomText)`
   font-size: 32px;
+  color: white;
 `
 const UnitText = styled(CustomText)`
   font-size: 18px;
   margin-left: 5px;
+  color: white;
 `
 const ActionsButtons = styled(View)`
   height: 100%;
   width: 50%;
   flex-direction: row;
-  justify-content: flex-end;;
+  justify-content: flex-end;
   align-items: center;
 `
 const Button = styled(TouchableHighlight)`
@@ -182,15 +174,12 @@ const Button = styled(TouchableHighlight)`
   align-items: center;
 `
 const ButtonConfirm = styled(Button)`
-  background: #7bbb5e;
+  background: ${props => props.background};
   margin: 0 15px 0 15px;
 `
-const ButtonReject = styled(Button)`
-  background: #fd6477;
-`
-const Icon = styled(Image)`
-  height: 25px;
-  width: 25px;
+const ButtonIcon = styled(Image)`
+  height: 50px;
+  width: 50px;
 `
 const PrivacyButton = styled(TouchableHighlight)`
   position: absolute;
@@ -201,4 +190,8 @@ const PrivacyButton = styled(TouchableHighlight)`
 const PrivacyButtonImage = styled(Image)`
   width: 40px;
   height: 40px;
+`
+const MarkerIcon = styled.Image`
+  width: ${props => `${props.width}px`};
+  height: ${props => `${props.width}px`};
 `

@@ -3,6 +3,6 @@ import { Text } from 'react-native';
 
 export class CustomText extends React.Component {
   render() {
-    return <Text {...this.props} style={[this.props.style, { fontFamily: 'open-sans' }]} />;
+    return <Text {...this.props} style={[this.props.style, { fontFamily: 'galano-grotesque' }]} />;
   }
 }

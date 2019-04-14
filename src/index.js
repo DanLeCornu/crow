@@ -11,6 +11,7 @@ import styled from 'styled-components';
 
 export default class App extends React.Component {
   state = {
+    theme: '#FFE853',
     screenHeight: 0,
     alert: null,
     loadingComplete: false,
@@ -178,11 +179,11 @@ export default class App extends React.Component {
         require('../assets/images/crow.png'),
         require('../assets/images/compass.png'),
         require('../assets/images/arrow.png'),
-        require('../assets/images/crow_marker.png'),
-        require('../assets/images/privacy_button.png'),
+        require('../assets/images/privacyButton.png'),
+        require('../assets/images/navigateArrow.png'),
       ]),
       Font.loadAsync({
-        'open-sans': require('../assets/fonts/OpenSans-Regular.ttf'),
+        'galano-grotesque': require('../assets/fonts/GalanoGrotesque-Bold.ttf'),
       }),
     ]);
   };
@@ -205,17 +206,17 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { screenHeight, location, crowPosition, screenPosition, alert, alertPosition } = this.state;
+      const { theme, screenHeight, location, crowPosition, screenPosition, alert, alertPosition } = this.state;
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
           {!location ? (
-            <LoadingContainer>
+            <LoadingContainer background={theme}>
               <Crow
                 style={{ transform: [{ translateY: crowPosition }] }}
                 source={require('../assets/images/crow.png')}
               />
-              <LoadingText>fetching your location ...</LoadingText>
+              <LoadingText>as the CROW flies</LoadingText>
             </LoadingContainer>
           ) : (
             <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
@@ -262,17 +263,16 @@ const Alert = styled(CustomText)`
 const LoadingContainer = styled.View`
   width: 100%;
   height: 100%;
-  flex-direction: row
-  justify-content: center;;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  background: white;
+  background: ${props => props.background};
 `
 const LoadingText = styled(CustomText)`
   font-size: 20px;
 `
 const Crow = styled(Animated.Image)`
-  width: 50px;
-  height: 50px;
-  margin-right: 10px;
+  width: 150px;
+  height: 150px;
   resize-mode: contain;
 `
