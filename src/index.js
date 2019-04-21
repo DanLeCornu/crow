@@ -13,18 +13,14 @@ export default class App extends React.Component {
   state = {
     theme: '#FFE853',
     screenHeight: 0,
-    alert: null,
     loadingComplete: false,
     location: null,
     destination: null,
     distance: 0,
     crowPosition: new Animated.Value(0),
     screenPosition: new Animated.Value(0),
-    alertPosition: new Animated.Value(-40),
     setDestination: destination => this.setDestination(destination),
     clearDestination: () => this.clearDestination(),
-    setAlert: alert => this.setAlert(alert),
-    hideAlert: () => this.hideAlert(),
     setScreen: screen => this.setScreen(screen),
     finishRoute: () => this.finishRoute(),
   };
@@ -97,39 +93,6 @@ export default class App extends React.Component {
     this.setScreen("Map")
   }
 
-  hideAlert = () => {
-    if (this.state.alert) {
-      this.hideAlertAnimation();
-      setTimeout(() => {
-        this.setState({ alert: null });
-      }, 300);
-    }
-  };
-
-  setAlert = alert => {
-    if (!this.state.alert) {
-      this.setState({ alert });
-      this.showAlertAnimation()
-      setTimeout(() => {
-        this.hideAlert();
-      }, 2000);
-    }
-  };
-
-  showAlertAnimation = () => {
-    Animated.timing(this.state.alertPosition, {
-      toValue: 0,
-      duration: 300,
-    }).start();
-  };
-
-  hideAlertAnimation = () => {
-    Animated.timing(this.state.alertPosition, {
-      toValue: -40,
-      duration: 300,
-    }).start();
-  };
-
   setScreen = screen => {
     if (screen == "Compass") {this.compassScreenTransition()}
     if (screen == "Map") {this.mapScreenTransition()}
@@ -149,13 +112,8 @@ export default class App extends React.Component {
     }).start();
   };
 
-  requestPermissions = async () => {
-    let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== 'granted') {
-      this.setState({
-        alert: 'Location permissions denied',
-      });
-    }
+  requestPermissions = () => {
+    Permissions.askAsync(Permissions.LOCATION);
   };
 
   subscribeToLocation = async () => {
@@ -206,7 +164,7 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { theme, screenHeight, location, crowPosition, screenPosition, alert, alertPosition } = this.state;
+      const { theme, screenHeight, location, crowPosition, screenPosition, destination } = this.state;
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
@@ -220,11 +178,8 @@ export default class App extends React.Component {
             </LoadingContainer>
           ) : (
             <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
-              <AlertContainer style={{top: alertPosition}}>
-                <Alert>{alert}</Alert>
-              </AlertContainer>
               <MapScreen />
-              {this.state.destination &&
+              {destination &&
                 <CompassScreen />
               }
             </ScreenContainer>
@@ -242,23 +197,6 @@ const ScreenContainer = styled(Animated.View)`
   overflow: hidden;
   position: absolute;
   bottom: 0;
-`
-const AlertContainer = styled(Animated.View)`
-  position: absolute;
-  background: #fdb135;
-  width: 47%;
-  margin: 0 1% 0 1%;
-  height: 40px;
-  z-index: 1;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  shadow-color: #000;
-  shadow-opacity: 0.1;
-`
-const Alert = styled(CustomText)`
-  line-height: 40px;
-  text-align: center;
-  font-size: 16px;
 `
 const LoadingContainer = styled.View`
   width: 100%;

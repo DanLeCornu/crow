@@ -56,7 +56,6 @@ class MapScreen extends React.Component {
 
     return (
       <Container>
-        
         <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co/privacy/crow')}>
           <PrivacyButtonImage source={require('../../assets/images/privacyButton.png')} />
         </PrivacyButton>
@@ -122,8 +121,9 @@ export default class MapScreenContainer extends React.Component {
 }
 
 const Container = styled(View)`
-  width: 50%;
+  width: 33.33%;
   height: 100%;
+  background: white;
 `
 const Map = styled(MapView)`
   height: 100%;
@@ -134,7 +134,7 @@ const ActionsContainer = styled(Animated.View)`
   height: 80px;
   background: white;
 `
-const Actions = styled(View)`
+const Actions = styled.View`
   height: 100%;
   width: 100%;
   flex-wrap: wrap;
@@ -180,6 +180,7 @@ const ButtonConfirm = styled(Button)`
 const ButtonIcon = styled(Image)`
   height: 50px;
   width: 50px;
+  margin: 0 0 3px 3px;
 `
 const PrivacyButton = styled(TouchableHighlight)`
   position: absolute;
