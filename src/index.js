@@ -4,6 +4,7 @@ import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
+import IntroScreen from './screens/IntroScreen';
 import { CustomText } from './components/CustomText'
 import Geolib from 'geolib';
 
@@ -18,11 +19,10 @@ export default class App extends React.Component {
     destination: null,
     distance: 0,
     crowPosition: new Animated.Value(0),
-    screenPosition: new Animated.Value(0),
+    screenXPosition: new Animated.Value(0),
     setDestination: destination => this.setDestination(destination),
     clearDestination: () => this.clearDestination(),
-    setScreen: screen => this.setScreen(screen),
-    finishRoute: () => this.finishRoute(),
+    moveTo: direction => this.moveTo(direction),
   };
 
   componentDidMount() {
@@ -30,6 +30,7 @@ export default class App extends React.Component {
     this.bounceCrow()
     this.requestPermissions()
     this.subscribeToLocation()
+    
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -88,29 +89,21 @@ export default class App extends React.Component {
     this.setState({ distance })
   }
 
-  finishRoute = () => {
-    this.setState({ destination: null })
-    this.setScreen("Map")
+  moveTo = direction => {
+    const currentPosition = this.state.screenXPosition._value
+    const screenWidth = Dimensions.get('window').width  
+    if (direction === 'right') {
+      Animated.timing(this.state.screenXPosition, {
+        toValue: currentPosition - screenWidth,
+        duration: 300,
+      }).start();
+    } else if (direction === 'left') {
+      Animated.timing(this.state.screenXPosition, {
+        toValue: currentPosition + screenWidth,
+        duration: 300,
+      }).start();
+    }
   }
-
-  setScreen = screen => {
-    if (screen == "Compass") {this.compassScreenTransition()}
-    if (screen == "Map") {this.mapScreenTransition()}
-  };
-
-  compassScreenTransition = () => {
-    Animated.timing(this.state.screenPosition, {
-      toValue: -Dimensions.get('window').width,
-      duration: 300,
-    }).start();
-  };
-
-  mapScreenTransition = () => {
-    Animated.timing(this.state.screenPosition, {
-      toValue: 0,
-      duration: 300,
-    }).start();
-  };
 
   requestPermissions = () => {
     Permissions.askAsync(Permissions.LOCATION);
@@ -164,7 +157,7 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { theme, screenHeight, location, crowPosition, screenPosition, destination } = this.state;
+      const { theme, screenHeight, location, crowPosition, screenXPosition, destination } = this.state;
       return (
         <AppContext.Provider value={this.state}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
@@ -177,7 +170,8 @@ export default class App extends React.Component {
               <LoadingText>as the CROW flies</LoadingText>
             </LoadingContainer>
           ) : (
-            <ScreenContainer style={{ transform: [{ translateX: screenPosition }], height: screenHeight }}>
+            <ScreenContainer style={{ transform: [{ translateX: screenXPosition }], height: screenHeight }}>
+              <IntroScreen />
               <MapScreen />
               {destination &&
                 <CompassScreen />
@@ -191,7 +185,7 @@ export default class App extends React.Component {
 }
 
 const ScreenContainer = styled(Animated.View)`
-  width: 200%;
+  width: 400%;
   flex-wrap: wrap;
   height: ${props => `${props.height}px`};
   overflow: hidden;

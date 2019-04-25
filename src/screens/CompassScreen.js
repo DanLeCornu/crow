@@ -7,8 +7,15 @@ import AppContext from '../AppContext';
 
 class CompassScreen extends React.Component {
 
+  finishRoute = () => {
+    this.props.moveTo('left')
+    setTimeout(() => {
+      this.props.clearDestination()
+    }, 300)
+  }
+
   render() {
-    const { distance, finishRoute } = this.props;
+    const { distance } = this.props;
 
     return (
       <Container>
@@ -22,7 +29,7 @@ class CompassScreen extends React.Component {
           <NextWaypointText>TO DESTINATION</NextWaypointText>
         </DistanceContainer>
         <Buttons>
-          <MapButton onPress={() => finishRoute()}>
+          <MapButton onPress={() => this.finishRoute()}>
             <ButtonText>FINISH ROUTE</ButtonText>
           </MapButton>
         </Buttons>
@@ -42,7 +49,7 @@ export default class CompassScreenContainer extends React.Component {
 }
 
 const Container = styled(View)`
-  width: 50%;
+  width: 25%;
   height: 100%;
   background: white;
 `

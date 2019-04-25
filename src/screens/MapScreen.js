@@ -41,7 +41,7 @@ class MapScreen extends React.Component {
   };
 
   handleConfirmRoute = () => {
-    this.props.setScreen('Compass')
+    this.props.moveTo('right')
     this.hideMapActions()
   }
 
@@ -121,7 +121,7 @@ export default class MapScreenContainer extends React.Component {
 }
 
 const Container = styled(View)`
-  width: 33.33%;
+  width: 25%;
   height: 100%;
   background: white;
 `
