@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapView } from 'expo';
+import { MapView, LinearGradient } from 'expo';
 import { View, Image, Animated, TouchableHighlight, Linking, Dimensions } from 'react-native';
 import { CustomText } from '../components/CustomText'
 import { Marker } from 'react-native-maps';
@@ -91,20 +91,20 @@ class MapScreen extends React.Component {
             </Marker>
           }
         </Map>
-        <ActionsContainer style={{bottom: actionsPosition}}>
-          <Actions>
-            <ActionsDistanceContainer>
-              <ActionsDistance>
-                <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
-              </ActionsDistance>
-            </ActionsDistanceContainer>
-            <ActionsButtons>
-              <ButtonConfirm background={theme} onPress={() => this.handleConfirmRoute()}>
-                <ButtonIcon source={require('../../assets/images/navigateArrow.png')}/>
-              </ButtonConfirm>
-            </ActionsButtons>
-          </Actions>
-        </ActionsContainer>
+          <ActionsContainer style={{bottom: actionsPosition}}>
+            <Actions colors={['transparent','rgba(0,0,0,0.8)']}>
+              <ActionsDistanceContainer>
+                <ActionsDistance>
+                  <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+                </ActionsDistance>
+              </ActionsDistanceContainer>
+              <ActionsButtons>
+                <ButtonConfirm background={theme} onPress={() => this.handleConfirmRoute()}>
+                  <ButtonIcon source={require('../../assets/images/navigateArrow.png')}/>
+                </ButtonConfirm>
+              </ActionsButtons>
+            </Actions>
+          </ActionsContainer>
       </Container>
     );
   }
@@ -131,10 +131,9 @@ const Map = styled(MapView)`
 const ActionsContainer = styled(Animated.View)`
   position: absolute;
   width: 100%;
-  height: 80px;
-  background: white;
+  height: 160px;
 `
-const Actions = styled.View`
+const Actions = styled(LinearGradient)`
   height: 100%;
   width: 100%;
   flex-wrap: wrap;
