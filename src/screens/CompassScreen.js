@@ -49,7 +49,7 @@ export default class CompassScreenContainer extends React.Component {
 }
 
 const Container = styled(View)`
-  width: 25%;
+  width: 20%;
   height: 100%;
   background: white;
 `

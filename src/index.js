@@ -1,11 +1,11 @@
 import React from 'react';
-import { Platform, StatusBar, Animated, Easing, Dimensions, NativeModules } from 'react-native';
+import { Animated, Dimensions, NativeModules } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
+import LoadingScreen from './screens/LoadingScreen';
+import IntroScreen from './screens/IntroScreen';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
-import IntroScreen from './screens/IntroScreen';
-import { CustomText } from './components/CustomText'
 import Geolib from 'geolib';
 
 import styled from 'styled-components';
@@ -18,7 +18,6 @@ export default class App extends React.Component {
     location: null,
     destination: null,
     distance: 0,
-    crowPosition: new Animated.Value(0),
     screenXPosition: new Animated.Value(0),
     setDestination: destination => this.setDestination(destination),
     clearDestination: () => this.clearDestination(),
@@ -27,10 +26,8 @@ export default class App extends React.Component {
 
   componentDidMount() {
     this.setScreenHeight()
-    this.bounceCrow()
     this.requestPermissions()
     this.subscribeToLocation()
-    
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -47,23 +44,6 @@ export default class App extends React.Component {
       this.setState({screenHeight})
     })
   }
-
-  bounceCrow = () => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(this.state.crowPosition, {
-          toValue: -20,
-          duration: 300,
-          easing: Easing.inOut(Easing.ease),
-        }),
-        Animated.timing(this.state.crowPosition, {
-          toValue: 0,
-          duration: 700,
-          easing: Easing.bounce,
-        }),
-      ]),
-    ).start();
-  };
 
   setDestination = async destination => {
     await this.setState({ destination });
@@ -121,7 +101,8 @@ export default class App extends React.Component {
           this.setState({ location });
         },
       );
-    }, 2000);
+      this.moveTo('right');
+    }, 2500);
   };
 
   loadResourcesAsync = async () => {
@@ -159,27 +140,19 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { theme, screenHeight, location, crowPosition, screenXPosition, destination } = this.state;
+      const { screenHeight, location, screenXPosition, destination } = this.state;
       return (
         <AppContext.Provider value={this.state}>
-          {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          {!location ? (
-            <LoadingContainer background={theme}>
-              <Crow
-                style={{ transform: [{ translateY: crowPosition }] }}
-                source={require('../assets/images/crow.png')}
-              />
-              <LoadingText>as the CROW flies</LoadingText>
-            </LoadingContainer>
-          ) : (
-            <ScreenContainer style={{ transform: [{ translateX: screenXPosition }], height: screenHeight }}>
-              <IntroScreen />
+          <ScreenContainer style={{ transform: [{ translateX: screenXPosition }], height: screenHeight }}>
+            <LoadingScreen />
+            <IntroScreen />
+            {location && 
               <MapScreen />
-              {destination &&
-                <CompassScreen />
-              }
-            </ScreenContainer>
-          )}
+            }
+            {location && destination && 
+              <CompassScreen />
+            }
+          </ScreenContainer>
         </AppContext.Provider>
       );
     }
@@ -187,26 +160,10 @@ export default class App extends React.Component {
 }
 
 const ScreenContainer = styled(Animated.View)`
-  width: 400%;
+  width: 500%;
   flex-wrap: wrap;
   height: ${props => `${props.height}px`};
   overflow: hidden;
   position: absolute;
   bottom: 0;
-`
-const LoadingContainer = styled.View`
-  width: 100%;
-  height: 100%;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: ${props => props.background};
-`
-const LoadingText = styled(CustomText)`
-  font-size: 20px;
-`
-const Crow = styled(Animated.Image)`
-  width: 150px;
-  height: 150px;
-  resize-mode: contain;
 `

@@ -18,7 +18,7 @@ export default class Button extends PureComponent {
 }
 
 const CustomButton = styled(TouchableHighlight)`
-  width: 50%;
+  width: 55%;
   height: 45px;
   background: #333333;
   border-radius: 20px;
@@ -27,5 +27,5 @@ const CustomButton = styled(TouchableHighlight)`
 `
 const ButtonText = styled(CustomText)`
   color: white;
-  font-size: 20px;
+  font-size: 18px;
 `
