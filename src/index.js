@@ -102,7 +102,7 @@ export default class App extends React.Component {
         },
       );
       this.moveTo('right');
-    }, 2500);
+    }, 3000);
   };
 
   loadResourcesAsync = async () => {

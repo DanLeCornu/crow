@@ -11,7 +11,6 @@ class Compass extends React.Component {
     headingSubscription: null,
     heading: null,
     bearing: null,
-    compassRotation: null,
     arrowRotation: null,
   };
 
@@ -19,7 +18,6 @@ class Compass extends React.Component {
     this.subscribeToHeading();
     if (this.props.destination) {
       this.setBearing();
-      this.setCompassRotation();
       this.setArrowRotation();
     }
   }
@@ -31,7 +29,6 @@ class Compass extends React.Component {
   componentDidUpdate = (prevProps, prevState) => {
     if (prevState.heading != this.state.heading) {
       this.setBearing();
-      this.setCompassRotation();
       this.setArrowRotation();
     }
   };
@@ -49,11 +46,6 @@ class Compass extends React.Component {
   setArrowRotation = () => {
     const target = this.state.bearing - this.state.heading;
     this.setState({arrowRotation: target})
-  };
-
-  setCompassRotation = () => {
-    const target = 360 - this.state.heading;
-    this.setState({compassRotation: target})
   };
 
   setBearing = () => {
@@ -90,11 +82,10 @@ class Compass extends React.Component {
   };
 
   render() {
-    const { compassRotation, arrowRotation } = this.state
+    const { arrowRotation } = this.state
     return (
       <Container>
         <CompassImage
-          style={{ transform: [{ rotate: compassRotation + 'deg' }] }}
           source={require('../../assets/images/compass_ring.png')}
         />
         <Arrow
@@ -125,5 +116,4 @@ const CompassImage = styled(Animated.Image)`
 `
 const Arrow = styled(Animated.Image)`
   position: absolute;
-  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
 `
