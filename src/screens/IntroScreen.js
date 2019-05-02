@@ -1,5 +1,4 @@
 import React from 'react';
-import { View, Image } from 'react-native';
 import { CustomText } from '../components/CustomText'
 import styled from 'styled-components';
 import AppContext from '../AppContext';
@@ -25,8 +24,8 @@ class IntroScreen extends React.Component {
         <Container background={theme}>
           <CompassContainer>
             <Compass>
-              <CompassRing source={require('../../assets/images/compassRing.png')} />
-              <CompassArrow source={require('../../assets/images/navigateArrow.png')}/>
+              <CompassRing source={require('../../assets/images/compass_ring.png')} />
+              <CompassArrow source={require('../../assets/images/navigate_arrow.png')}/>
             </Compass>
           </CompassContainer>
           <TextContainer>
@@ -51,41 +50,41 @@ export default class IntroScreenContainer extends React.Component {
   }
 }
 
-const Container = styled(View)`
+const Container = styled.View`
   width: 20%;
   height: 100%;
   background: ${props => props.background};
 `
-const MapContainer = styled(View)`
+const MapContainer = styled.View`
   height: 55%;
   align-items: center;
   justify-content: flex-end;
   box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
 `
-const Map = styled(Image)`
+const Map = styled.Image`
   width: 75%;
   height: 75%;
   resize-mode: contain;
 `
-const CompassContainer = styled(View)`
+const CompassContainer = styled.View`
   height: 55%;
   align-items: center;
   justify-content: flex-end;
 `
-const Compass = styled(View)`
+const Compass = styled.View`
   height: 75%;
   align-items: center;
   justify-content: center;
 `
-const CompassRing = styled(Image)`
+const CompassRing = styled.Image`
   resize-mode: contain;
   box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
 `
-const CompassArrow = styled(Image)`
+const CompassArrow = styled.Image`
   position: absolute;
   box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
 `
-const TextContainer = styled(View)`
+const TextContainer = styled.View`
   height: 25%;
   justify-content: center;
 `
@@ -95,7 +94,7 @@ const IntroText = styled(CustomText)`
   font-size: 22px;
   margin: 0 auto;
 `
-const ButtonContainer = styled(View)`
+const ButtonContainer = styled.View`
   height: 20%;
   flex-direction: row;
   justify-content: center;

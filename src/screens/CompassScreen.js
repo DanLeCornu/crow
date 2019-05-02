@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, TouchableHighlight } from 'react-native';
 import { CustomText } from '../components/CustomText'
 import Compass from '../components/Compass';
 import styled from 'styled-components';
 import AppContext from '../AppContext';
+
+import Button from '../components/Button'
 
 class CompassScreen extends React.Component {
 
@@ -15,24 +16,22 @@ class CompassScreen extends React.Component {
   }
 
   render() {
-    const { distance } = this.props;
+    const { theme, distance } = this.props;
 
     return (
-      <Container>
+      <Container background={theme}>
         <CompassContainer>
           <Compass />
         </CompassContainer>
         <DistanceContainer>
-          <Distance>
+          <TextContainer>
+            <DistanceIcon source={require('../../assets/images/directions_black.png')}/>
             <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
-          </Distance>
-          <NextWaypointText>TO DESTINATION</NextWaypointText>
+          </TextContainer>
         </DistanceContainer>
-        <Buttons>
-          <MapButton onPress={() => this.finishRoute()}>
-            <ButtonText>FINISH ROUTE</ButtonText>
-          </MapButton>
-        </Buttons>
+        <ButtonContainer>
+          <Button onPress={() => this.finishRoute()} text="FINISH"/>
+        </ButtonContainer>
       </Container>
     );
   }
@@ -48,57 +47,41 @@ export default class CompassScreenContainer extends React.Component {
   }
 }
 
-const Container = styled(View)`
+const Container = styled.View`
   width: 20%;
   height: 100%;
-  background: white;
+  background: ${props => props.background};
 `
-const CompassContainer = styled(View)`
-  height: 60%;
-  width: 100%;
-  justify-content: center;
+const CompassContainer = styled.View`
+  height: 55%;
   align-items: center;
+  justify-content: flex-end;
 `
-const DistanceContainer = styled(View)`
-  height: 20%;
-  width: 100%;
-  justify-content: center;
+const DistanceContainer = styled.View`
+  height: 25%;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
 `
-const Distance = styled(View)`
+const TextContainer = styled.View`
   flex-direction: row;
   align-items: baseline;
 `
+const DistanceIcon = styled.Image`
+  height: 40px;
+  width: 40px;
+  margin: 0 10px 0 0;
+`
 const DistanceText = styled(CustomText)`
-  font-size: 42px;
+  font-size: 36px;
 `
 const UnitText = styled(CustomText)`
   font-size: 18px;
   margin-left: 5px;
 `
-const NextWaypointText = styled(CustomText)`
-  color: grey;
-  font-size: 14px;
-  text-align: center;
-  margin-top: -10px;
-`
-const Buttons = styled(View)`
-  justify-content: flex-end;
+
+const ButtonContainer = styled.View`
   height: 20%;
-  width: 100%;
-`
-const Button = styled(TouchableHighlight)`
-  align-items: center;
+  flex-direction: row;
   justify-content: center;
-  width: 100%;
-  height: 50%;
-  shadow-color: #000;
-  shadow-opacity: 0.1;
-`
-const MapButton = styled(Button)`
-  background: #fd6477;
-`
-const ButtonText = styled(CustomText)`
-  color: white;
-  font-size: 18px;
 `

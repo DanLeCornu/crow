@@ -65,7 +65,7 @@ export default class App extends React.Component {
         longitude: this.state.destination[1],
       },
     )
-    let distance = (distanceM / 1000).toFixed(2);
+    let distance = (distanceM / 1000).toFixed(1);
     this.setState({ distance })
   }
 
@@ -111,10 +111,13 @@ export default class App extends React.Component {
         require('../assets/images/crow.png'),
         require('../assets/images/compass.png'),
         require('../assets/images/arrow.png'),
-        require('../assets/images/privacyButton.png'),
-        require('../assets/images/navigateArrow.png'),
+        require('../assets/images/privacy_button.png'),
+        require('../assets/images/navigate_arrow.png'),
         require('../assets/images/map.png'),
-        require('../assets/images/compassRing.png'),
+        require('../assets/images/compass_ring.png'),
+        require('../assets/images/compass_arrow.png'),
+        require('../assets/images/directions_white.png'),
+        require('../assets/images/directions_black.png'),
       ]),
       Font.loadAsync({
         'galano-grotesque': require('../assets/fonts/GalanoGrotesque-Bold.ttf'),

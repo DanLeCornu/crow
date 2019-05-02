@@ -92,16 +92,16 @@ class Compass extends React.Component {
   render() {
     const { compassRotation, arrowRotation } = this.state
     return (
-      <>
+      <Container>
         <CompassImage
           style={{ transform: [{ rotate: compassRotation + 'deg' }] }}
-          source={require('../../assets/images/compass.png')}
+          source={require('../../assets/images/compass_ring.png')}
         />
         <Arrow
           style={{ transform: [{ rotate: arrowRotation + 'deg' }] }}
-          source={require('../../assets/images/arrow.png')}
+          source={require('../../assets/images/compass_arrow.png')}
         />
-      </>
+      </Container>
     );
   }
 }
@@ -115,15 +115,15 @@ export default class CompassContainer extends React.Component {
     );
   }
 }
-
+const Container = styled.View`
+  align-items: center;
+  justify-content: center;
+`
 const CompassImage = styled(Animated.Image)`
-  width: 300px;
-  height: 300px;
   resize-mode: contain;
-`;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
+`
 const Arrow = styled(Animated.Image)`
-  width: 270px;
-  height: 270px;
   position: absolute;
-  resize-mode: contain;
-`;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.25);
+`
