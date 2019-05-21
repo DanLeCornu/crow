@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Dimensions, NativeModules } from 'react-native';
+import { Animated, Dimensions, NativeModules, AsyncStorage } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import LoadingScreen from './screens/LoadingScreen';
@@ -15,6 +15,7 @@ export default class App extends React.Component {
     theme: '#FFE853',
     screenHeight: 0,
     loadingComplete: false,
+    skipIntro: false,
     location: null,
     destination: null,
     distance: 0,
@@ -22,12 +23,14 @@ export default class App extends React.Component {
     setDestination: destination => this.setDestination(destination),
     clearDestination: () => this.clearDestination(),
     moveTo: direction => this.moveTo(direction),
+    storeData: (k,v) => this.storeData(k,v)
   };
 
   componentDidMount() {
     this.setScreenHeight()
     this.requestPermissions()
     this.subscribeToLocation()
+    this.setSkipIntro()
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -37,6 +40,11 @@ export default class App extends React.Component {
       }
     }
   };
+
+  setSkipIntro = async () => {
+    const skipIntro = await this.retrieveData('skipIntro')
+    this.setState({skipIntro})
+  }
 
   setScreenHeight = () => {
     NativeModules.StatusBarManager.getHeight((statusBarManager) => {
@@ -133,6 +141,25 @@ export default class App extends React.Component {
     this.setState({ loadingComplete: true });
   };
 
+  storeData = async (k,v) => {
+    try {
+      await AsyncStorage.setItem(k,v)
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
+
+  retrieveData = async (k) => {
+    try {
+      const value = await AsyncStorage.getItem(k)
+      if (value !== null) {
+        return value
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  }
+
   render() {
     if (!this.state.loadingComplete && !this.props.skipLoadingScreen) {
       return (
@@ -143,12 +170,14 @@ export default class App extends React.Component {
         />
       );
     } else {
-      const { screenHeight, location, screenXPosition, destination } = this.state;
+      const { screenHeight, location, screenXPosition, destination, skipIntro } = this.state;
       return (
         <AppContext.Provider value={this.state}>
           <ScreenContainer style={{ transform: [{ translateX: screenXPosition }], height: screenHeight }}>
             <LoadingScreen />
-            <IntroScreen />
+            {skipIntro !== 'true' &&
+              <IntroScreen />
+            }
             {location && 
               <MapScreen />
             }

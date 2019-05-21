@@ -6,6 +6,12 @@ import AppContext from '../AppContext';
 import Button from '../components/Button'
 
 class IntroScreen extends React.Component {
+
+  completeIntro = () => {
+    this.props.storeData('skipIntro','true')
+    this.props.moveTo('right')
+  }
+
   render() {
     const {theme, moveTo} = this.props;
     return (
@@ -32,7 +38,7 @@ class IntroScreen extends React.Component {
             <IntroText>let the compass guide you</IntroText>
           </TextContainer>
           <ButtonContainer>
-            <Button onPress={() => moveTo('right')} text="LET'S GO !"/>
+            <Button onPress={() => this.completeIntro()} text="LET'S GO !"/>
           </ButtonContainer>
         </Container>
       </>
