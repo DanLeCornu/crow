@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Dimensions, NativeModules, AsyncStorage } from 'react-native';
+import { Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import LoadingScreen from './screens/LoadingScreen';
@@ -173,6 +173,7 @@ export default class App extends React.Component {
       const { screenHeight, location, screenXPosition, destination, skipIntro } = this.state;
       return (
         <AppContext.Provider value={this.state}>
+          <StatusBar barStyle="default"/>
           <ScreenContainer style={{ transform: [{ translateX: screenXPosition }], height: screenHeight }}>
             <LoadingScreen />
             {skipIntro !== 'true' &&
