@@ -42,7 +42,6 @@ class MapScreen extends React.Component {
 
   handleConfirmRoute = () => {
     this.props.moveTo('right')
-    this.hideMapActions()
   }
 
   render() {

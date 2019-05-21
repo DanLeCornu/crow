@@ -8,13 +8,6 @@ import Button from '../components/Button'
 
 class CompassScreen extends React.Component {
 
-  finishRoute = () => {
-    this.props.moveTo('left')
-    setTimeout(() => {
-      this.props.clearDestination()
-    }, 300)
-  }
-
   render() {
     const { theme, distance } = this.props;
 
@@ -30,7 +23,7 @@ class CompassScreen extends React.Component {
           </TextContainer>
         </DistanceContainer>
         <ButtonContainer>
-          <Button onPress={() => this.finishRoute()} text="FINISH"/>
+          <Button onPress={() => this.props.moveTo('left')} text="BACK"/>
         </ButtonContainer>
       </Container>
     );
