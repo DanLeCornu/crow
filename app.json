@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Krow",
-    "slug": "krow",
+    "name": "Crow",
+    "slug": "crow",
     "primaryColor": "#BABABA",
     "privacy": "public",
     "sdkVersion": "31.0.0",
@@ -24,7 +24,7 @@
     ],
     "ios": {
       "icon": "./assets/images/ios_icon.png",
-      "bundleIdentifier": "co.noquarter.krow",
+      "bundleIdentifier": "co.noQuarter.crow",
       "buildNumber": "1.0.2",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
@@ -36,7 +36,7 @@
         "ACCESS_FINE_LOCATION"
       ],
       "icon": "./assets/images/android_icon.png",
-      "package": "co.noquarter.krow",
+      "package": "co.noQuarter.crow",
       "versionCode": 4
     },
     "description": "Simple \"As the crow flies\" bike navigation app"
