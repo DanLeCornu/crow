@@ -117,8 +117,6 @@ export default class App extends React.Component {
     return Promise.all([
       Asset.loadAsync([
         require('../assets/images/crow.png'),
-        require('../assets/images/compass.png'),
-        require('../assets/images/arrow.png'),
         require('../assets/images/privacy_button.png'),
         require('../assets/images/navigate_arrow.png'),
         require('../assets/images/map.png'),
