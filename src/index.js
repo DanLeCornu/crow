@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native';
+import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import LoadingScreen from './screens/LoadingScreen';
@@ -47,10 +47,15 @@ export default class App extends React.Component {
   }
 
   setScreenHeight = () => {
-    NativeModules.StatusBarManager.getHeight((statusBarManager) => {
-      const screenHeight = Dimensions.get('window').height - statusBarManager.height
+    if (Platform.OS === 'ios') {
+      NativeModules.StatusBarManager.getHeight((statusBarManager) => {
+        const screenHeight = Dimensions.get('window').height - statusBarManager.height
+        this.setState({screenHeight})
+      })
+    } else {
+      const screenHeight = Dimensions.get('window').height
       this.setState({screenHeight})
-    })
+    }
   }
 
   setDestination = async destination => {
