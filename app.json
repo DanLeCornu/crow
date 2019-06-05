@@ -28,7 +28,9 @@
       "buildNumber": "1.0.2",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
-      }
+      },
+      "publishBundlePath": "ios/crow/Supporting/shell-app.bundle",
+      "publishManifestPath": "ios/crow/Supporting/shell-app-manifest.json"
     },
     "android": {
       "permissions": [
@@ -37,8 +39,16 @@
       ],
       "icon": "./assets/images/android_icon.png",
       "package": "co.noQuarter.crow",
-      "versionCode": 4
+      "versionCode": 4,
+      "publishBundlePath": "android/app/src/main/assets/shell-app.bundle",
+      "publishManifestPath": "android/app/src/main/assets/shell-app-manifest.json"
     },
-    "description": "Simple \"As the crow flies\" navigation app"
+    "description": "Simple \"As the crow flies\" navigation app",
+    "isDetached": true,
+    "detach": {
+      "iosExpoViewUrl": "https://s3.amazonaws.com/exp-exponent-view-code/ios-v2.9.0-sdk31.0.0-250a3991-b623-4f9c-b07f-0b9ed7e8c4c9.tar.gz",
+      "androidExpoViewUrl": "https://s3.amazonaws.com/exp-exponent-view-code/android-v2.9.2-sdk31.0.0-f0c63b44-0556-45f2-b4b9-ff5082f9ef72.tar.gz"
+    },
+    "scheme": "exp501e0e9c46f648a7ace61b0b4e6b41dd"
   }
 }

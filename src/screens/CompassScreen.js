@@ -24,6 +24,7 @@ class CompassScreen extends React.Component {
         </DistanceContainer>
         <ButtonContainer>
           <Button onPress={() => this.props.moveTo('left')} text="BACK"/>
+          <Button onPress={() => this.props.connectBLE()} text="CONNECT BLE"/>
         </ButtonContainer>
       </Container>
     );
@@ -72,9 +73,7 @@ const UnitText = styled(CustomText)`
   font-size: 18px;
   margin-left: 5px;
 `
-
 const ButtonContainer = styled.View`
   height: 20%;
-  flex-direction: row;
-  justify-content: center;
+  align-items: center;
 `

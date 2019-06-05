@@ -7,6 +7,7 @@ import IntroScreen from './screens/IntroScreen';
 import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
 import Geolib from 'geolib';
+import { BleManager } from 'react-native-ble-plx'
 
 import styled from 'styled-components';
 
@@ -23,8 +24,14 @@ export default class App extends React.Component {
     setDestination: destination => this.setDestination(destination),
     clearDestination: () => this.clearDestination(),
     moveTo: direction => this.moveTo(direction),
-    storeData: (k,v) => this.storeData(k,v)
+    storeData: (k,v) => this.storeData(k,v),
+    connectBLE: () => this.connectBLE()
   };
+
+  manager = new BleManager({
+    restoreStateIdentifier: "restoreStateIdentifier",
+    restoreStateFunction: () => { console.log('restoreStateFunction') }
+  });
 
   componentDidMount() {
     this.setScreenHeight()
@@ -161,6 +168,50 @@ export default class App extends React.Component {
     } catch (e) {
       console.log(e.message);
     }
+  }
+
+  connectBLE = () => {
+    console.log('connect ble');
+    const subscription = this.manager.onStateChange((state) => {
+      if (state === 'PoweredOn') {
+          this.scanAndConnect();
+          subscription.remove();
+      }
+    }, true);
+  }
+
+  scanAndConnect() {
+    this.manager.startDeviceScan(null, null, (error, device) => {
+      console.log("Scanning...");
+      console.log(device.name);
+      if (error) {
+        // Handle error (scanning will be stopped automatically)
+        console.log(error.message);
+        return
+      }
+      // Check if it is a device you are looking for based on advertisement data
+      // or other criteria.
+      if (device.name === 'DSDTECH HM-10') {
+        console.log("Connecting to DSD HM-10")
+        // Stop scanning as it's not necessary if you are scanning for one device.
+        this.manager.stopDeviceScan();
+        // Proceed with connection.
+        device.connect()
+          .then((device) => {
+            console.log("Discovering services and characteristics")
+            return device.discoverAllServicesAndCharacteristics()
+          })
+          .then((device) => {
+            console.log("Setting notifications")
+            return this.setupNotifications(device)
+          })
+          .then(() => {
+            console.log("Listening...")
+          }, (error) => {
+            console.log(error.message)
+          })
+      }
+    });
   }
 
   render() {
