@@ -8,6 +8,7 @@ import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
 import Geolib from 'geolib';
 import BleManager from 'react-native-ble-manager'
+import { stringToBytes } from 'convert-string';
 
 import styled from 'styled-components';
 
@@ -26,6 +27,7 @@ export default class App extends React.Component {
     moveTo: direction => this.moveTo(direction),
     storeData: (k,v) => this.storeData(k,v),
     // connectBLE: () => this.connectBLE()
+    BleScan: () => this.BleScan()
   };
 
   // manager = new BleManager({
@@ -38,18 +40,6 @@ export default class App extends React.Component {
     this.requestPermissions()
     this.subscribeToLocation()
     this.setSkipIntro()
-
-    BleManager.start({showAlert: false})
-    .then(() => {
-      // Success code
-      console.log('Module initialized');
-    });
-    BleManager.scan([], 5, true)
-    .then((results) => {
-      // Success code
-      console.log('Scan started');
-      console.log(results)
-    });
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -59,6 +49,57 @@ export default class App extends React.Component {
       }
     }
   };
+
+  BleScan = async () => {
+    await BleManager.start({showAlert: false})
+    .then(() => {
+      // Success code
+      console.log('BLE init');
+    });
+    await BleManager.scan([], 5, true)
+    .then(() => {
+      // Success code
+      console.log('Scan started');
+    });
+    setTimeout(() => {
+      BleManager.getDiscoveredPeripherals([])
+      .then((peripheralsArray) => {
+        // Success code
+        console.log('Discovered peripherals: ' + peripheralsArray.length);
+        peripheralsArray.forEach((device) => {
+          if (device.name === "DSDTECH HM-10") {
+            console.log("Discovered crow prototype, connecting ...")
+            BleManager.connect(device.id)
+            .then(() => {
+              // Success code
+              console.log('Connected');
+              BleManager.retrieveServices(device.id)
+              .then((peripheralInfo) => {
+                // Success code
+                const serviceUUID = peripheralInfo.characteristics[0].service
+                const characteristicUUID = peripheralInfo.characteristics[0].characteristic
+                const data = stringToBytes("hello crow");
+                BleManager.writeWithoutResponse(device.id, serviceUUID, characteristicUUID, data)
+                .then(() => {
+                  // Success code
+                  console.log('Writed: ' + data);
+                })
+                .catch((error) => {
+                  // Failure code
+                  console.log(error);
+                });
+              });
+
+            })
+            .catch((error) => {
+              // Failure code
+              console.log("ERROR: ", error);
+            });
+          }
+        })
+      });
+    }, 5000)
+  }
 
   setSkipIntro = async () => {
     const skipIntro = await this.retrieveData('skipIntro')
