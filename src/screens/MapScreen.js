@@ -2,7 +2,6 @@ import React from 'react';
 import { MapView, LinearGradient } from 'expo';
 import { Animated, Linking, Dimensions } from 'react-native';
 import { CustomText } from '../components/CustomText'
-import { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
 import styled from 'styled-components';
 
@@ -73,7 +72,7 @@ class MapScreen extends React.Component {
           }}
         >
           {destination &&
-            <Marker
+            <MapView.Marker
               draggable
               coordinate={{
                 latitude: destination[0],
@@ -87,7 +86,7 @@ class MapScreen extends React.Component {
                 source={require('../../assets/images/crow.png')}
                 width={markerWidth}
               />
-            </Marker>
+            </MapView.Marker>
           }
         </Map>
           <ActionsContainer style={{bottom: actionsPosition}}>
