@@ -1,1 +1,0 @@
-../../../../../node_modules/react-native-ble-plx/ios/BleClientManager/BleClientManager.h

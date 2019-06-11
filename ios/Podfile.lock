@@ -180,10 +180,8 @@ PODS:
   - lottie-ios (2.5.3)
   - React (0.57.1):
     - React/Core (= 0.57.1)
-  - react-native-ble-plx (1.0.3):
+  - react-native-ble-manager (6.6.4):
     - React
-    - react-native-ble-plx-swift
-  - react-native-ble-plx-swift (1.0.3)
   - React/ART (0.57.1):
     - React/Core
   - React/Core (0.57.1):
@@ -266,8 +264,7 @@ DEPENDENCIES:
   - EXSMS (from `../node_modules/expo-sms/ios`)
   - Folly (from `../node_modules/react-native/third-party-podspecs/Folly.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
-  - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
-  - react-native-ble-plx-swift (from `../node_modules/react-native-ble-plx`)
+  - react-native-ble-manager (from `../node_modules/react-native-ble-manager`)
   - React/ART (from `../node_modules/react-native`)
   - React/Core (from `../node_modules/react-native`)
   - React/CxxBridge (from `../node_modules/react-native`)
@@ -377,10 +374,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/glog.podspec"
   React:
     :path: "../node_modules/react-native"
-  react-native-ble-plx:
-    :path: "../node_modules/react-native-ble-plx"
-  react-native-ble-plx-swift:
-    :path: "../node_modules/react-native-ble-plx"
+  react-native-ble-manager:
+    :path: "../node_modules/react-native-ble-manager"
   yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -445,10 +440,9 @@ SPEC CHECKSUMS:
   JKBigInteger2: e91672035c42328c48b7dd015b66812ddf40ca9b
   lottie-ios: a50d5c0160425cd4b01b852bb9578963e6d92d31
   React: 1fe0eb13d90b625d94c3b117c274dcfd2e760e11
-  react-native-ble-plx: 7ad27c5a97bdb07ca77cf92badacd990e350c32c
-  react-native-ble-plx-swift: 283d93356064625d8d825b0814203628afe381f0
+  react-native-ble-manager: 18c35501264993847449cab7d82361e110e2253d
   yoga: b1ce48b6cf950b98deae82838f5173ea7cf89e85
 
-PODFILE CHECKSUM: 7003672b0348aff46e8eb9ea4ce5b68af7526c36
+PODFILE CHECKSUM: fa0cdd02e9db6b510541773eaf6fdb47c885d118
 
 COCOAPODS: 1.5.3

@@ -204,12 +204,7 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>react-native-ble-plx-swift.xcscheme</key>
-		<dict>
-			<key>isShown</key>
-			<false/>
-		</dict>
-		<key>react-native-ble-plx.xcscheme</key>
+		<key>react-native-ble-manager.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>

@@ -24,7 +24,7 @@ class CompassScreen extends React.Component {
         </DistanceContainer>
         <ButtonContainer>
           <Button onPress={() => this.props.moveTo('left')} text="BACK"/>
-          <Button onPress={() => this.props.connectBLE()} text="CONNECT BLE"/>
+          {/* <Button onPress={() => this.props.connectBLE()} text="CONNECT BLE"/> */}
         </ButtonContainer>
       </Container>
     );

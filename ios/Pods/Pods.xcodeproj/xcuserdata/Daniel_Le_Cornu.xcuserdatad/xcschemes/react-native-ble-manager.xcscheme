@@ -14,9 +14,9 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2282E9D3A64F12A0476D1EBC464AEA5C"
-               BuildableName = "libreact-native-ble-plx-swift.a"
-               BlueprintName = "react-native-ble-plx-swift"
+               BlueprintIdentifier = "D2DB8C8361E00C17B70C27302A9B89D8"
+               BuildableName = "libreact-native-ble-manager.a"
+               BlueprintName = "react-native-ble-manager"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
