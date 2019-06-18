@@ -9,8 +9,7 @@ import Button from '../components/Button'
 class CompassScreen extends React.Component {
 
   render() {
-    const { theme, distance } = this.props;
-
+    const { theme, distance, bleConnected, bleConnecting } = this.props;
     return (
       <Container background={theme}>
         <CompassContainer>
@@ -23,9 +22,16 @@ class CompassScreen extends React.Component {
           </TextContainer>
         </DistanceContainer>
         <ButtonContainer>
+          {!bleConnected && !bleConnecting &&
+            <Button onPress={() => this.props.BleConnect()} text="CONNECT" />
+          }
+          {bleConnecting &&
+            <Button disabled text="CONNECTING ..." />
+          }
+          {bleConnected &&
+            <Button onPress={() => this.props.BleDisconnect()} text="DISCONNECT" />
+          }
           <Button onPress={() => this.props.moveTo('left')} text="BACK"/>
-          {/* <Button onPress={() => this.props.connectBLE()} text="CONNECT BLE"/> */}
-          <Button onPress={() => this.props.BleScan()} text="SCAN BLE"/>
         </ButtonContainer>
       </Container>
     );

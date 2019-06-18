@@ -21,19 +21,19 @@ export default class App extends React.Component {
     location: null,
     destination: null,
     distance: 0,
+    bleConnected: false,
+    bleConnecting: false,
+    peripheralId: null,
+    peripheralInfo: null,
     screenXPosition: new Animated.Value(0),
-    setDestination: destination => this.setDestination(destination),
+    setDestination: d => this.setDestination(d),
     clearDestination: () => this.clearDestination(),
-    moveTo: direction => this.moveTo(direction),
+    moveTo: d => this.moveTo(d),
     storeData: (k,v) => this.storeData(k,v),
-    // connectBLE: () => this.connectBLE()
-    BleScan: () => this.BleScan()
+    BleConnect: () => this.BleConnect(),
+    BleDisconnect: () => this.BleDisconnect(),
+    BleWrite: (data) => this.BleWrite(data),
   };
-
-  // manager = new BleManager({
-  //   restoreStateIdentifier: "restoreStateIdentifier",
-  //   restoreStateFunction: () => { console.log('restoreStateFunction') }
-  // });
   
   componentDidMount() {
     this.setScreenHeight()
@@ -50,46 +50,29 @@ export default class App extends React.Component {
     }
   };
 
-  BleScan = async () => {
-    await BleManager.start({showAlert: false})
-    .then(() => {
-      // Success code
-      console.log('BLE init');
+  BleConnect = async () => {
+    this.setState({bleConnecting: true})
+    await BleManager.start({showAlert: false}).then(() => {
+      console.log("BLE init ...");
     });
-    await BleManager.scan([], 5, true)
-    .then(() => {
-      // Success code
-      console.log('Scan started');
+    await BleManager.scan([], 3, true).then(() => {
+      console.log("Scan started ...");
     });
     setTimeout(() => {
-      BleManager.getDiscoveredPeripherals([])
-      .then((peripheralsArray) => {
-        // Success code
-        console.log('Discovered peripherals: ' + peripheralsArray.length);
-        peripheralsArray.forEach((device) => {
-          if (device.name === "DSDTECH HM-10") {
-            console.log("Discovered crow prototype, connecting ...")
-            BleManager.connect(device.id)
-            .then(() => {
-              // Success code
-              console.log('Connected');
-              BleManager.retrieveServices(device.id)
-              .then((peripheralInfo) => {
-                // Success code
-                const serviceUUID = peripheralInfo.characteristics[0].service
-                const characteristicUUID = peripheralInfo.characteristics[0].characteristic
-                const data = stringToBytes("hello crow");
-                BleManager.writeWithoutResponse(device.id, serviceUUID, characteristicUUID, data)
-                .then(() => {
-                  // Success code
-                  console.log('Writed: ' + data);
+      BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
+        peripheralsArray.forEach((peripheral) => {
+          if (peripheral.name === "DSDTECH HM-10") {
+            console.log("Discovered crow prototype, connecting ...");
+            BleManager.connect(peripheral.id).then(() => {
+              BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
+                console.log("Connected");
+                this.setState({
+                  bleConnected: true,
+                  bleConnecting: false,
+                  peripheralId: peripheral.id,
+                  peripheralInfo: peripheralInfo
                 })
-                .catch((error) => {
-                  // Failure code
-                  console.log(error);
-                });
               });
-
             })
             .catch((error) => {
               // Failure code
@@ -98,7 +81,33 @@ export default class App extends React.Component {
           }
         })
       });
-    }, 5000)
+    }, 3000)
+  }
+
+  BleDisconnect = () => {
+    BleManager.disconnect(this.state.peripheralId).then(() => {
+      // Success code
+      console.log('Disconnected');
+      this.setState({bleConnected: false})
+    })
+    .catch((error) => {
+      // Failure code
+      console.log(error);
+    });
+  }
+
+  BleWrite = (data) => {
+    console.log("Sending data ...")
+    const { peripheralInfo, peripheralId } = this.state
+    const serviceUUID = peripheralInfo.characteristics[0].service
+    const characteristicUUID = peripheralInfo.characteristics[0].characteristic
+    const byteData = stringToBytes(`{${data}}`)
+    BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData).then(() => {
+      console.log("Sent data: ", byteData)
+    })
+    .catch((error) => {
+      console.log(error);
+    });
   }
 
   setSkipIntro = async () => {
@@ -172,6 +181,9 @@ export default class App extends React.Component {
         data => {
           const location = [data.coords.latitude, data.coords.longitude];
           this.setState({ location });
+          if (this.state.bleConnected && this.state.destination) {
+            this.BleWrite(`[${location}],[${this.state.destination}]`)
+          }
         },
       );
       this.moveTo('right');
@@ -222,50 +234,6 @@ export default class App extends React.Component {
       console.log(e.message);
     }
   }
-
-  // connectBLE = () => {
-  //   console.log('connect ble');
-  //   const subscription = this.manager.onStateChange((state) => {
-  //     if (state === 'PoweredOn') {
-  //         this.scanAndConnect();
-  //         subscription.remove();
-  //     }
-  //   }, true);
-  // }
-
-  // scanAndConnect() {
-  //   this.manager.startDeviceScan(null, null, (error, device) => {
-  //     console.log("Scanning...");
-  //     console.log(device.name);
-  //     if (error) {
-  //       // Handle error (scanning will be stopped automatically)
-  //       console.log(error.message);
-  //       return
-  //     }
-  //     // Check if it is a device you are looking for based on advertisement data
-  //     // or other criteria.
-  //     if (device.name === 'DSDTECH HM-10') {
-  //       console.log("Connecting to DSD HM-10")
-  //       // Stop scanning as it's not necessary if you are scanning for one device.
-  //       this.manager.stopDeviceScan();
-  //       // Proceed with connection.
-  //       device.connect()
-  //         .then((device) => {
-  //           console.log("Discovering services and characteristics")
-  //           return device.discoverAllServicesAndCharacteristics()
-  //         })
-  //         .then((device) => {
-  //           console.log("Setting notifications")
-  //           return this.setupNotifications(device)
-  //         })
-  //         .then(() => {
-  //           console.log("Listening...")
-  //         }, (error) => {
-  //           console.log(error.message)
-  //         })
-  //     }
-  //   });
-  // }
 
   render() {
     if (!this.state.loadingComplete && !this.props.skipLoadingScreen) {
