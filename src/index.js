@@ -127,7 +127,7 @@ export default class App extends React.Component {
   }
 
   BleWrite = (data) => {
-    console.log("Sending data ...")
+    // console.log("Sending data ...")
     const { peripheralInfo, peripheralId } = this.state
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
