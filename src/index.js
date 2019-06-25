@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native';
+import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, NativeEventEmitter } from 'react-native';
 import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
 import AppContext from './AppContext';
 import LoadingScreen from './screens/LoadingScreen';
@@ -8,7 +8,8 @@ import MapScreen from './screens/MapScreen';
 import CompassScreen from './screens/CompassScreen';
 import Geolib from 'geolib';
 import BleManager from 'react-native-ble-manager'
-import { stringToBytes } from 'convert-string';
+import { stringToBytes, bytesToString } from 'convert-string';
+import { calcBearing } from './services/bearing'
 
 import styled from 'styled-components';
 
@@ -32,7 +33,6 @@ export default class App extends React.Component {
     storeData: (k,v) => this.storeData(k,v),
     BleConnect: () => this.BleConnect(),
     BleDisconnect: () => this.BleDisconnect(),
-    BleWrite: (data) => this.BleWrite(data),
   };
   
   componentDidMount() {
@@ -40,6 +40,16 @@ export default class App extends React.Component {
     this.requestPermissions()
     this.subscribeToLocation()
     this.setSkipIntro()
+
+    // testing
+      // setInterval(() => {
+      //   if (this.state.bleConnected) {
+      //     const location = this.state.location
+      //     const destination = this.state.destination
+      //     const data = `${location[0].toFixed(6)},${location[1].toFixed(6)},${destination[0].toFixed(6)},${destination[1].toFixed(6)}` 
+      //     this.BleWrite(data)
+      //   }
+      // },1000)
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -60,26 +70,32 @@ export default class App extends React.Component {
     });
     setTimeout(() => {
       BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
-        peripheralsArray.forEach((peripheral) => {
-          if (peripheral.name === "DSDTECH HM-10") {
-            console.log("Discovered crow prototype, connecting ...");
-            BleManager.connect(peripheral.id).then(() => {
-              BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
-                console.log("Connected");
-                this.setState({
-                  bleConnected: true,
-                  bleConnecting: false,
-                  peripheralId: peripheral.id,
-                  peripheralInfo: peripheralInfo
-                })
+        if (peripheralsArray.length > 1) {
+            peripheralsArray.forEach((peripheral) => {
+              if (peripheral.name === "DSDTECH HM-10") {
+                console.log("Discovered crow prototype, connecting ...");
+              BleManager.connect(peripheral.id).then(() => {
+                BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
+                  console.log("Connected");
+                  this.setState({
+                    bleConnected: true,
+                    bleConnecting: false,
+                    peripheralId: peripheral.id,
+                    peripheralInfo: peripheralInfo
+                  })
+                  this.BleListen()
+                });
+              })
+              .catch((error) => {
+                // Failure code
+                console.log("ERROR: ", error);
               });
-            })
-            .catch((error) => {
-              // Failure code
-              console.log("ERROR: ", error);
-            });
-          }
-        })
+            }
+          })
+        } else {
+          console.log("Could not find crow prototype");
+          this.setState({bleConnecting: false})
+        }
       });
     }, 3000)
   }
@@ -96,6 +112,20 @@ export default class App extends React.Component {
     });
   }
 
+  BleStartNotification = () => {
+    const { peripheralInfo, peripheralId } = this.state
+    const serviceUUID = peripheralInfo.characteristics[0].service
+    const characteristicUUID = peripheralInfo.characteristics[0].characteristic
+    BleManager.startNotification(peripheralId, serviceUUID, characteristicUUID).then(() => {
+      // Success code
+      console.log('Notification started');
+    })
+    .catch((error) => {
+      // Failure code
+      console.log(error);
+    });
+  }
+
   BleWrite = (data) => {
     console.log("Sending data ...")
     const { peripheralInfo, peripheralId } = this.state
@@ -103,11 +133,37 @@ export default class App extends React.Component {
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
     const byteData = stringToBytes(`{${data}}`)
     BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData).then(() => {
-      console.log("Sent data: ", byteData)
+      // console.log("Sent data: ", byteData.toString())
     })
     .catch((error) => {
       console.log(error);
     });
+  }
+
+  BleListen = () => {    
+    this.BleStartNotification()
+    const BleManagerModule = NativeModules.BleManager;
+    const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+
+    bleManagerEmitter.addListener(
+      'BleManagerDidUpdateValueForCharacteristic',
+      ({ value, peripheral, characteristic, service }) => {
+        const heading = parseInt(bytesToString(value));
+        // console.log(`Received heading: ${heading}`);
+        const bearing = calcBearing(
+          this.state.location[0],
+          this.state.location[1],
+          this.state.destination[0],
+          this.state.destination[1],
+        )
+        let target = bearing - heading;
+        if (target <= 0) {
+          target += 360
+        }
+        this.BleWrite(target)
+        // console.log("wrote target: ", target);
+      }
+    );
   }
 
   setSkipIntro = async () => {
@@ -181,9 +237,11 @@ export default class App extends React.Component {
         data => {
           const location = [data.coords.latitude, data.coords.longitude];
           this.setState({ location });
-          if (this.state.bleConnected && this.state.destination) {
-            this.BleWrite(`[${location}],[${this.state.destination}]`)
-          }
+          // const destination = this.state.destination
+          // if (this.state.bleConnected && destination) {
+          //   const data = `${location[0].toFixed(6)},${location[1].toFixed(6)},${destination[0].toFixed(6)},${destination[1].toFixed(6)}` 
+          //   this.BleWrite(data)
+          // }
         },
       );
       this.moveTo('right');

@@ -13,7 +13,12 @@ class CompassScreen extends React.Component {
     return (
       <Container background={theme}>
         <CompassContainer>
-          <Compass />
+          {bleConnected ? (
+            <CustomText>Use the prototype hardware for direction :)</CustomText>
+          ) : (
+            <Compass />
+          )
+          }
         </CompassContainer>
         <DistanceContainer>
           <TextContainer>

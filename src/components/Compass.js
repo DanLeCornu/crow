@@ -3,6 +3,7 @@ import { Animated } from 'react-native';
 import { Location } from 'expo';
 import throttle from 'lodash.throttle'
 import AppContext from '../AppContext';
+import { calcBearing } from '../services/bearing'
 
 import styled from 'styled-components';
 
@@ -49,36 +50,13 @@ class Compass extends React.Component {
   };
 
   setBearing = () => {
-    let bearing = this.bearing(
+    const bearing = calcBearing(
       this.props.location[0],
       this.props.location[1],
       this.props.destination[0],
       this.props.destination[1],
     );
     this.setState({ bearing });
-  };
-
-  bearing = (startLat, startLng, destLat, destLng) => {
-    startLat = this.toRadians(startLat);
-    startLng = this.toRadians(startLng);
-    destLat = this.toRadians(destLat);
-    destLng = this.toRadians(destLng);
-
-    const y = Math.sin(destLng - startLng) * Math.cos(destLat);
-    const x =
-      Math.cos(startLat) * Math.sin(destLat) -
-      Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
-    let brng = Math.atan2(y, x);
-    brng = this.toDegrees(brng);
-    return Math.ceil((brng + 360) % 360);
-  };
-
-  toRadians = degrees => {
-    return (degrees * Math.PI) / 180;
-  };
-
-  toDegrees = radians => {
-    return (radians * 180) / Math.PI;
   };
 
   render() {
