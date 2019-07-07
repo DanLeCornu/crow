@@ -10,6 +10,7 @@ import Geolib from 'geolib';
 import BleManager from 'react-native-ble-manager'
 import { stringToBytes, bytesToString } from 'convert-string';
 import { calcBearing } from './services/bearing'
+import BackgroundTimer from 'react-native-background-timer'
 
 import styled from 'styled-components';
 
@@ -40,16 +41,12 @@ export default class App extends React.Component {
     this.requestPermissions()
     this.subscribeToLocation()
     this.setSkipIntro()
-
-    // testing
-      // setInterval(() => {
-      //   if (this.state.bleConnected) {
-      //     const location = this.state.location
-      //     const destination = this.state.destination
-      //     const data = `${location[0].toFixed(6)},${location[1].toFixed(6)},${destination[0].toFixed(6)},${destination[1].toFixed(6)}` 
-      //     this.BleWrite(data)
-      //   }
-      // },1000)
+    // test background tasks
+    // BackgroundTimer.runBackgroundTimer(() => { 
+    //   console.log('tick')
+    // }, 
+    // 1000);
+    // BackgroundTimer.stopBackgroundTimer(); //after this call all code on background stop run.
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -73,10 +70,8 @@ export default class App extends React.Component {
         if (peripheralsArray.length > 1) {
             peripheralsArray.forEach((peripheral) => {
               if (peripheral.name === "DSDTECH HM-10") {
-                console.log("Discovered crow prototype, connecting ...");
               BleManager.connect(peripheral.id).then(() => {
                 BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
-                  console.log("Connected");
                   this.setState({
                     bleConnected: true,
                     bleConnecting: false,
@@ -86,10 +81,6 @@ export default class App extends React.Component {
                   this.BleListen()
                 });
               })
-              .catch((error) => {
-                // Failure code
-                console.log("ERROR: ", error);
-              });
             }
           })
         } else {
@@ -102,42 +93,23 @@ export default class App extends React.Component {
 
   BleDisconnect = () => {
     BleManager.disconnect(this.state.peripheralId).then(() => {
-      // Success code
-      console.log('Disconnected');
       this.setState({bleConnected: false})
     })
-    .catch((error) => {
-      // Failure code
-      console.log(error);
-    });
   }
 
   BleStartNotification = () => {
     const { peripheralInfo, peripheralId } = this.state
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
-    BleManager.startNotification(peripheralId, serviceUUID, characteristicUUID).then(() => {
-      // Success code
-      console.log('Notification started');
-    })
-    .catch((error) => {
-      // Failure code
-      console.log(error);
-    });
+    BleManager.startNotification(peripheralId, serviceUUID, characteristicUUID)
   }
 
   BleWrite = (data) => {
-    // console.log("Sending data ...")
     const { peripheralInfo, peripheralId } = this.state
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
     const byteData = stringToBytes(`{${data}}`)
-    BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData).then(() => {
-      // console.log("Sent data: ", byteData.toString())
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+    BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData)
   }
 
   BleListen = () => {    
@@ -147,9 +119,8 @@ export default class App extends React.Component {
 
     bleManagerEmitter.addListener(
       'BleManagerDidUpdateValueForCharacteristic',
-      ({ value, peripheral, characteristic, service }) => {
+      ({ value }) => {
         const heading = parseInt(bytesToString(value));
-        // console.log(`Received heading: ${heading}`);
         const bearing = calcBearing(
           this.state.location[0],
           this.state.location[1],
@@ -161,7 +132,6 @@ export default class App extends React.Component {
           target += 360
         }
         this.BleWrite(target)
-        // console.log("wrote target: ", target);
       }
     );
   }
