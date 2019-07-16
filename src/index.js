@@ -10,7 +10,8 @@ import Geolib from 'geolib';
 import BleManager from 'react-native-ble-manager'
 import { stringToBytes, bytesToString } from 'convert-string';
 import { calcBearing } from './services/bearing'
-import BackgroundTimer from 'react-native-background-timer'
+// import throttle from 'lodash.throttle'
+// import BackgroundTimer from 'react-native-background-timer'
 
 import styled from 'styled-components';
 
@@ -27,6 +28,9 @@ export default class App extends React.Component {
     bleConnecting: false,
     peripheralId: null,
     peripheralInfo: null,
+    subscription: null,
+    confirmedConnection: false,
+    confirmedDisconnection: false,
     screenXPosition: new Animated.Value(0),
     setDestination: d => this.setDestination(d),
     clearDestination: () => this.clearDestination(),
@@ -41,12 +45,6 @@ export default class App extends React.Component {
     this.requestPermissions()
     this.subscribeToLocation()
     this.setSkipIntro()
-    // test background tasks
-    // BackgroundTimer.runBackgroundTimer(() => { 
-    //   console.log('tick')
-    // }, 
-    // 1000);
-    // BackgroundTimer.stopBackgroundTimer(); //after this call all code on background stop run.
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -58,27 +56,37 @@ export default class App extends React.Component {
   };
 
   BleConnect = async () => {
-    this.setState({bleConnecting: true})
-    await BleManager.start({showAlert: false}).then(() => {
-      console.log("BLE init ...");
-    });
+    this.setState({
+      bleConnecting: true,
+      confirmedConnection: false
+    })
+    await BleManager.start({showAlert: false})
     await BleManager.scan([], 3, true).then(() => {
       console.log("Scan started ...");
     });
     setTimeout(() => {
       BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
         if (peripheralsArray.length > 1) {
-            peripheralsArray.forEach((peripheral) => {
-              if (peripheral.name === "DSDTECH HM-10") {
+          peripheralsArray.forEach((peripheral) => {
+            if (peripheral.name === "DSDTECH HM-10") { // Will need to bear in mind what the actual hardware ble name will be
               BleManager.connect(peripheral.id).then(() => {
                 BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
+                  console.log('Connected');
                   this.setState({
                     bleConnected: true,
                     bleConnecting: false,
                     peripheralId: peripheral.id,
                     peripheralInfo: peripheralInfo
                   })
+                  this.BleStartNotification()
                   this.BleListen()
+                  this.BleWrite("connected")
+                  // setInterval(() => {
+                  //   this.BleWrite("connected")
+                  //   if (this.state.confirmedConnection) {clearInterval(self)}
+                  // }, 1000);
+                  // For some reason data isn't received sometimes and i can't figure out why.
+                  // while (!this.state.confirmedConnection) { this.BleWrite("connected") }
                 });
               })
             }
@@ -91,8 +99,15 @@ export default class App extends React.Component {
     }, 3000)
   }
 
-  BleDisconnect = () => {
+  BleDisconnect = async () => {
+    await this.BleWrite("disconnected")
+    // const { subscription } = this.state
+    // if (subscription) { await subscription.remove() }
     BleManager.disconnect(this.state.peripheralId).then(() => {
+      console.log('Disconnected');
+      this.setState({bleConnected: false})
+    }).catch((error) => {
+      console.log(error);
       this.setState({bleConnected: false})
     })
   }
@@ -102,6 +117,9 @@ export default class App extends React.Component {
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
     BleManager.startNotification(peripheralId, serviceUUID, characteristicUUID)
+    .catch((error) => {
+      console.log(error);
+    })
   }
 
   BleWrite = (data) => {
@@ -110,17 +128,24 @@ export default class App extends React.Component {
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
     const byteData = stringToBytes(`{${data}}`)
     BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData)
+    .catch((e) => {
+      console.log(e);
+    })
   }
 
   BleListen = () => {    
-    this.BleStartNotification()
-    const BleManagerModule = NativeModules.BleManager;
-    const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
-
-    bleManagerEmitter.addListener(
+    const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
+    const subscription = bleManagerEmitter.addListener(
       'BleManagerDidUpdateValueForCharacteristic',
       ({ value }) => {
-        const heading = parseInt(bytesToString(value));
+        console.log('received:', bytesToString(value));
+        
+        if (bytesToString(value) == ("connected")) {
+          this.setState({confirmedConnection: true})
+        } else if (bytesToString(value) == ("disconnected")) {
+          this.setState({confirmedDisconnection: true})
+        }
+        const heading = parseInt(bytesToString(value))
         const bearing = calcBearing(
           this.state.location[0],
           this.state.location[1],
@@ -134,6 +159,7 @@ export default class App extends React.Component {
         this.BleWrite(target)
       }
     );
+    this.setState({subscription})
   }
 
   setSkipIntro = async () => {
@@ -207,11 +233,6 @@ export default class App extends React.Component {
         data => {
           const location = [data.coords.latitude, data.coords.longitude];
           this.setState({ location });
-          // const destination = this.state.destination
-          // if (this.state.bleConnected && destination) {
-          //   const data = `${location[0].toFixed(6)},${location[1].toFixed(6)},${destination[0].toFixed(6)},${destination[1].toFixed(6)}` 
-          //   this.BleWrite(data)
-          // }
         },
       );
       this.moveTo('right');
