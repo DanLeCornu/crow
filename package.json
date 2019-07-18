@@ -22,7 +22,6 @@
     "lodash.throttle": "^4.1.1",
     "react": "16.5.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-31.0.0.tar.gz",
-    "react-native-background-timer": "^2.1.1",
     "react-native-ble-manager": "^6.6.4",
     "react-native-maps-directions": "^1.6.0",
     "react-navigation": "^2.18.2",

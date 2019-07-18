@@ -10,7 +10,6 @@ import Geolib from 'geolib';
 import BleManager from 'react-native-ble-manager'
 import { stringToBytes, bytesToString } from 'convert-string';
 import { calcBearing } from './services/bearing'
-// import BackgroundTimer from 'react-native-background-timer'
 
 import styled from 'styled-components';
 
@@ -151,8 +150,7 @@ export default class App extends React.Component {
     const subscription = bleManagerEmitter.addListener(
       'BleManagerDidUpdateValueForCharacteristic',
       ({ value }) => {
-        console.log('received:', bytesToString(value));
-        
+        console.log('received:', bytesToString(value));        
         if (bytesToString(value).includes("confirmedConnection")) {
           this.setState({confirmedConnection: true})
           console.log('CONFIRMED CONNECTION');          
@@ -160,7 +158,6 @@ export default class App extends React.Component {
           this.setState({initiateDisconnection: true})
           console.log('CONFIRMED DISCONNECTION');
         }
-
         const heading = parseInt(bytesToString(value))
         const bearing = calcBearing(
           this.state.location[0],

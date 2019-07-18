@@ -97,7 +97,6 @@ apply from: 'expo.gradle'
 
 
 dependencies {
-    compile project(':react-native-background-timer')
     compile project(':react-native-ble-manager')
     compile project(':react-native-ble-plx')
   implementation fileTree(dir: 'libs', include: ['*.jar'])
