@@ -9,7 +9,7 @@ import Button from '../components/Button'
 class CompassScreen extends React.Component {
 
   render() {
-    const { theme, distance, bleConnected, bleConnecting } = this.props;
+    const { theme, distance, bleConnected, bleConnecting, bleDisconnecting } = this.props;
     return (
       <Container background={theme}>
         <CompassContainer>
@@ -33,7 +33,10 @@ class CompassScreen extends React.Component {
           {bleConnecting &&
             <Button disabled text="CONNECTING ..." />
           }
-          {bleConnected &&
+          {bleDisconnecting &&
+            <Button disabled text="DISCONNECTING ..." />
+          }
+          {(bleConnected && !bleDisconnecting) &&
             <Button onPress={() => this.props.BleDisconnect()} text="DISCONNECT" />
           }
           <Button onPress={() => this.props.moveTo('left')} text="BACK"/>

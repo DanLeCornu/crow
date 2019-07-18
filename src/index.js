@@ -10,7 +10,6 @@ import Geolib from 'geolib';
 import BleManager from 'react-native-ble-manager'
 import { stringToBytes, bytesToString } from 'convert-string';
 import { calcBearing } from './services/bearing'
-// import throttle from 'lodash.throttle'
 // import BackgroundTimer from 'react-native-background-timer'
 
 import styled from 'styled-components';
@@ -26,11 +25,12 @@ export default class App extends React.Component {
     distance: 0,
     bleConnected: false,
     bleConnecting: false,
+    bleDisconnecting: false,
     peripheralId: null,
     peripheralInfo: null,
     subscription: null,
     confirmedConnection: false,
-    confirmedDisconnection: false,
+    initiateDisconnection: false,
     screenXPosition: new Animated.Value(0),
     setDestination: d => this.setDestination(d),
     clearDestination: () => this.clearDestination(),
@@ -70,23 +70,26 @@ export default class App extends React.Component {
           peripheralsArray.forEach((peripheral) => {
             if (peripheral.name === "DSDTECH HM-10") { // Will need to bear in mind what the actual hardware ble name will be
               BleManager.connect(peripheral.id).then(() => {
-                BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
-                  console.log('Connected');
+                BleManager.retrieveServices(peripheral.id).then(async (peripheralInfo) => {
                   this.setState({
-                    bleConnected: true,
-                    bleConnecting: false,
                     peripheralId: peripheral.id,
                     peripheralInfo: peripheralInfo
                   })
                   this.BleStartNotification()
                   this.BleListen()
-                  this.BleWrite("connected")
-                  // setInterval(() => {
-                  //   this.BleWrite("connected")
-                  //   if (this.state.confirmedConnection) {clearInterval(self)}
-                  // }, 1000);
-                  // For some reason data isn't received sometimes and i can't figure out why.
-                  // while (!this.state.confirmedConnection) { this.BleWrite("connected") }
+                  await this.setState({confirmedConnection: false})
+                  console.log('Attempting to confirm connection ...');
+                  const interval = setInterval(() => {
+                    if (this.state.confirmedConnection) {
+                      this.setState({
+                        bleConnected: true,
+                        bleConnecting: false
+                      })
+                      clearInterval(interval)
+                    } else {
+                      this.BleWrite("connect")
+                    }
+                  }, 1000);
                 });
               })
             }
@@ -100,16 +103,26 @@ export default class App extends React.Component {
   }
 
   BleDisconnect = async () => {
-    await this.BleWrite("disconnected")
-    // const { subscription } = this.state
-    // if (subscription) { await subscription.remove() }
-    BleManager.disconnect(this.state.peripheralId).then(() => {
-      console.log('Disconnected');
-      this.setState({bleConnected: false})
-    }).catch((error) => {
-      console.log(error);
-      this.setState({bleConnected: false})
+    await this.setState({
+      initiateDisconnection: false,
+      bleDisconnecting: true
     })
+    const interval = setInterval(async () => {
+      if (this.state.initiateDisconnection) {
+        const { subscription } = this.state
+        if (subscription) { await subscription.remove() }
+        BleManager.disconnect(this.state.peripheralId)
+        .catch((error) => {
+          console.log(error);
+        })
+        this.setState({bleConnected: false})
+        this.setState({bleDisconnecting: false})
+        clearInterval(interval)
+      } else {
+        console.log('attempting to initiate disconnection ...');
+        this.BleWrite("disconnect")
+      }
+    }, 1000);
   }
 
   BleStartNotification = () => {
@@ -140,11 +153,14 @@ export default class App extends React.Component {
       ({ value }) => {
         console.log('received:', bytesToString(value));
         
-        if (bytesToString(value) == ("connected")) {
+        if (bytesToString(value).includes("confirmedConnection")) {
           this.setState({confirmedConnection: true})
-        } else if (bytesToString(value) == ("disconnected")) {
-          this.setState({confirmedDisconnection: true})
+          console.log('CONFIRMED CONNECTION');          
+        } else if (bytesToString(value).includes("initDisconnection")) {
+          this.setState({initiateDisconnection: true})
+          console.log('CONFIRMED DISCONNECTION');
         }
+
         const heading = parseInt(bytesToString(value))
         const bearing = calcBearing(
           this.state.location[0],
