@@ -46,10 +46,8 @@ export default class App extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (this.state.destination) {
-      if (prevState.location != this.state.location && !this.state.bleConnected) {
-        this.setDistance()
-      }
+    if (this.state.destination && prevState.location != this.state.location) {
+      this.setDistance()
     }
   };
 
@@ -84,7 +82,7 @@ export default class App extends React.Component {
                         bleConnecting: false
                       })
                       BackgroundTimer.runBackgroundTimer(() => { 
-                        this.BleWrite(`${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})}`)
+                        this.sendData()
                       }, 5000)
                       clearInterval(interval)
                     } else {
@@ -164,6 +162,11 @@ export default class App extends React.Component {
     );
   }
 
+  sendData() {
+    const data = `${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})},${this.state.distance}`
+    this.BleWrite(data)
+  }
+
   setSkipIntro = async () => {
     const skipIntro = await this.retrieveData('skipIntro')
     this.setState({skipIntro})
@@ -183,10 +186,9 @@ export default class App extends React.Component {
 
   setDestination = async destination => {
     await this.setState({ destination });
+    await this.setDistance()
     if (this.state.bleConnected) {
-      this.BleWrite(`${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})}`)
-    } else {
-      this.setDistance()
+      this.sendData()
     }
   };
 
