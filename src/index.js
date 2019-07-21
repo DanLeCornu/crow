@@ -1,15 +1,15 @@
-import React from 'react';
-import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, NativeEventEmitter } from 'react-native';
-import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
-import AppContext from './AppContext';
-import LoadingScreen from './screens/LoadingScreen';
-import IntroScreen from './screens/IntroScreen';
-import MapScreen from './screens/MapScreen';
-import CompassScreen from './screens/CompassScreen';
-import Geolib from 'geolib';
+import React from 'react'
+import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, NativeEventEmitter } from 'react-native'
+import { AppLoading, Asset, Font, Location, Permissions } from 'expo'
+import AppContext from './AppContext'
+import LoadingScreen from './screens/LoadingScreen'
+import IntroScreen from './screens/IntroScreen'
+import MapScreen from './screens/MapScreen'
+import CompassScreen from './screens/CompassScreen'
+import Geolib from 'geolib'
 import BleManager from 'react-native-ble-manager'
-import { stringToBytes, bytesToString } from 'convert-string';
-import { calcBearing } from './services/bearing'
+import { stringToBytes, bytesToString } from 'convert-string'
+import BackgroundTimer from 'react-native-background-timer'
 
 import styled from 'styled-components';
 
@@ -27,7 +27,6 @@ export default class App extends React.Component {
     bleDisconnecting: false,
     peripheralId: null,
     peripheralInfo: null,
-    subscription: null,
     confirmedConnection: false,
     initiateDisconnection: false,
     screenXPosition: new Animated.Value(0),
@@ -48,7 +47,7 @@ export default class App extends React.Component {
 
   componentDidUpdate = (prevProps, prevState) => {
     if (this.state.destination) {
-      if (prevState.location != this.state.location) {
+      if (prevState.location != this.state.location && !this.state.bleConnected) {
         this.setDistance()
       }
     }
@@ -67,7 +66,7 @@ export default class App extends React.Component {
       BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
         if (peripheralsArray.length > 1) {
           peripheralsArray.forEach((peripheral) => {
-            if (peripheral.name === "DSDTECH HM-10") { // Will need to bear in mind what the actual hardware ble name will be
+            if (peripheral.name === "DSDTECH HM-10") {
               BleManager.connect(peripheral.id).then(() => {
                 BleManager.retrieveServices(peripheral.id).then(async (peripheralInfo) => {
                   this.setState({
@@ -84,6 +83,9 @@ export default class App extends React.Component {
                         bleConnected: true,
                         bleConnecting: false
                       })
+                      BackgroundTimer.runBackgroundTimer(() => { 
+                        this.BleWrite(`${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})}`)
+                      }, 5000)
                       clearInterval(interval)
                     } else {
                       this.BleWrite("connect")
@@ -102,14 +104,14 @@ export default class App extends React.Component {
   }
 
   BleDisconnect = async () => {
+    BackgroundTimer.stopBackgroundTimer()
     await this.setState({
       initiateDisconnection: false,
       bleDisconnecting: true
     })
     const interval = setInterval(async () => {
       if (this.state.initiateDisconnection) {
-        const { subscription } = this.state
-        if (subscription) { await subscription.remove() }
+        if (this.subscription) { await this.subscription.remove() }
         BleManager.disconnect(this.state.peripheralId)
         .catch((error) => {
           console.log(error);
@@ -142,12 +144,12 @@ export default class App extends React.Component {
     BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData)
     .catch((e) => {
       console.log(e);
-    })
+    })    
   }
 
   BleListen = () => {    
     const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
-    const subscription = bleManagerEmitter.addListener(
+    this.subscription = bleManagerEmitter.addListener(
       'BleManagerDidUpdateValueForCharacteristic',
       ({ value }) => {
         console.log('received:', bytesToString(value));        
@@ -158,21 +160,8 @@ export default class App extends React.Component {
           this.setState({initiateDisconnection: true})
           console.log('CONFIRMED DISCONNECTION');
         }
-        const heading = parseInt(bytesToString(value))
-        const bearing = calcBearing(
-          this.state.location[0],
-          this.state.location[1],
-          this.state.destination[0],
-          this.state.destination[1],
-        )
-        let target = bearing - heading;
-        if (target <= 0) {
-          target += 360
-        }
-        this.BleWrite(target)
       }
     );
-    this.setState({subscription})
   }
 
   setSkipIntro = async () => {
@@ -194,7 +183,11 @@ export default class App extends React.Component {
 
   setDestination = async destination => {
     await this.setState({ destination });
-    this.setDistance()
+    if (this.state.bleConnected) {
+      this.BleWrite(`${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})}`)
+    } else {
+      this.setDistance()
+    }
   };
 
   clearDestination = () => {
@@ -243,9 +236,9 @@ export default class App extends React.Component {
           enableHighAccuracy: true,
           distanceInterval: 5,
         },
-        data => {
+        async data => {
           const location = [data.coords.latitude, data.coords.longitude];
-          this.setState({ location });
+          await this.setState({ location });
         },
       );
       this.moveTo('right');

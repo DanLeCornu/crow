@@ -14,9 +14,9 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6EAA4E9B6756AB8C58C2B13429251112"
-               BuildableName = "libPods-crow.a"
-               BlueprintName = "Pods-crow"
+               BlueprintIdentifier = "242229AD2AFA62CD4B59EF51E98FEC4B"
+               BuildableName = "libreact-native-background-timer.a"
+               BlueprintName = "react-native-background-timer"
                ReferencedContainer = "container:Pods.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>

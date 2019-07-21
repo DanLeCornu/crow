@@ -22,8 +22,12 @@ class CompassScreen extends React.Component {
         </CompassContainer>
         <DistanceContainer>
           <TextContainer>
-            <DistanceIcon source={require('../../assets/images/directions_black.png')}/>
-            <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+          {!bleConnected &&
+            <>
+              <DistanceIcon source={require('../../assets/images/directions_black.png')}/>
+              <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+            </>
+          }
           </TextContainer>
         </DistanceContainer>
         <ButtonContainer>
@@ -39,7 +43,7 @@ class CompassScreen extends React.Component {
           {(bleConnected && !bleDisconnecting) &&
             <Button onPress={() => this.props.BleDisconnect()} text="DISCONNECT" />
           }
-          <Button onPress={() => this.props.moveTo('left')} text="BACK"/>
+          <Button onPress={() => this.props.moveTo('left')} text="BACK TO MAP"/>
         </ButtonContainer>
       </Container>
     );

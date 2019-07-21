@@ -10,6 +10,7 @@ import expolib_v1.okhttp3.OkHttpClient;
 
 // Needed for `react-native link`
 // import com.facebook.react.ReactApplication;
+import com.ocetnik.timer.BackgroundTimerPackage;
 import it.innove.BleManagerPackage;
 import com.polidea.reactnativeble.BlePackage;
 
@@ -28,6 +29,7 @@ public class MainApplication extends ExpoApplication {
 
         // Needed for `react-native link`
         // new MainReactPackage(),
+            new BackgroundTimerPackage(),
             new BleManagerPackage(),
             new BlePackage()
     );
