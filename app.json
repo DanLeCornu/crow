@@ -27,7 +27,12 @@
       "bundleIdentifier": "co.noQuarter.crow",
       "buildNumber": "1.0.2",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
+        "UIBackgroundModes": [
+          "location"
+        ],
+        "NSLocationWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass.",
+        "NSLocationAlwaysUsageDescription": "This app uses location data to show user location on map, and to set the bearing of the compass."
       },
       "publishBundlePath": "ios/crow/Supporting/shell-app.bundle",
       "publishManifestPath": "ios/crow/Supporting/shell-app-manifest.json"

@@ -81,9 +81,10 @@ export default class App extends React.Component {
                         bleConnected: true,
                         bleConnecting: false
                       })
+                      this.sendData()
                       BackgroundTimer.runBackgroundTimer(() => { 
                         this.sendData()
-                      }, 3000)
+                      }, 5000)
                       clearInterval(interval)
                     } else {
                       this.BleWrite("connect")
@@ -138,7 +139,7 @@ export default class App extends React.Component {
     const { peripheralInfo, peripheralId } = this.state
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
-    const byteData = stringToBytes(`${data}`)
+    const byteData = stringToBytes(`{${data}}`)
     BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData)
     .catch((e) => {
       console.log(e);
