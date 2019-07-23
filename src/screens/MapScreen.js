@@ -17,14 +17,9 @@ class MapScreen extends React.Component {
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
     ];
-    this.props.setDestination(destination);
+    this.props.setRoute(destination);
     this.showMapActions();
   };
-
-  handleClearDestination = () => {
-    this.props.clearDestination();
-    this.hideMapActions();
-  }
 
   showMapActions = () => {
     Animated.timing(this.state.actionsPosition, {

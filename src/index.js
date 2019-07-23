@@ -21,6 +21,7 @@ export default class App extends React.Component {
     skipIntro: false,
     location: null,
     destination: null,
+    totalTripDistance: 0,
     distance: 0,
     bleConnected: false,
     bleConnecting: false,
@@ -30,8 +31,7 @@ export default class App extends React.Component {
     confirmedConnection: false,
     initiateDisconnection: false,
     screenXPosition: new Animated.Value(0),
-    setDestination: d => this.setDestination(d),
-    clearDestination: () => this.clearDestination(),
+    setRoute: d => this.setRoute(d),
     moveTo: d => this.moveTo(d),
     storeData: (k,v) => this.storeData(k,v),
     BleConnect: () => this.BleConnect(),
@@ -163,7 +163,7 @@ export default class App extends React.Component {
   }
 
   sendData() {
-    const data = `${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})},${this.state.distance}`
+    const data = `${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
     this.BleWrite(data)
   }
 
@@ -184,31 +184,37 @@ export default class App extends React.Component {
     }
   }
 
-  setDestination = async destination => {
+  setRoute = async destination => {
     await this.setState({ destination });
     await this.setDistance()
+    await this.setTotalTripDistance()
     if (this.state.bleConnected) {
       this.sendData()
     }
   };
 
-  clearDestination = () => {
-    this.setState({ destination: null })
+  setTotalTripDistance = async () => {
+    const totalTripDistance = await this.calcDistance(this.state.location, this.state.destination)
+    this.setState({ totalTripDistance })
   }
 
-  setDistance = () => {
+  setDistance = async () => {
+    const distance = await this.calcDistance(this.state.location, this.state.destination)
+    this.setState({ distance })
+  }
+
+  calcDistance = (start, finish) => {
     let distanceM = Geolib.getDistance(
       {
-        latitude: this.state.location[0],
-        longitude: this.state.location[1],
+        latitude: start[0],
+        longitude: start[1],
       },
       {
-        latitude: this.state.destination[0],
-        longitude: this.state.destination[1],
+        latitude: finish[0],
+        longitude: finish[1],
       },
     )
-    let distance = (distanceM / 1000).toFixed(1);
-    this.setState({ distance })
+    return (distanceM / 1000).toFixed(2);
   }
 
   moveTo = direction => {
