@@ -1,5 +1,5 @@
 import React from 'react'
-import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, NativeEventEmitter } from 'react-native'
+import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native'
 
 import { AppLoading } from 'expo';
 import { Asset } from 'expo-asset';
@@ -14,9 +14,7 @@ import IntroScreen from './screens/IntroScreen'
 import MapScreen from './screens/MapScreen'
 import CompassScreen from './screens/CompassScreen'
 import Geolib from 'geolib'
-import BleManager from 'react-native-ble-manager'
-import { stringToBytes, bytesToString } from 'convert-string'
-import BackgroundTimer from 'react-native-background-timer'
+import Ble from './services/Ble'
 
 import styled from 'styled-components';
 
@@ -27,10 +25,12 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
     console.log(error.message);
   }
   if (data) {
-    const { locations } = data;
-    console.log('background location:', locations);
+    const { locations } = data
+    const location = [locations[0].coords.latitude, locations[0].coords.longitude];
+    console.log(location);
   }
 });
+
 
 export default class App extends React.Component {
   state = {
@@ -56,12 +56,17 @@ export default class App extends React.Component {
     BleConnect: () => this.BleConnect(),
     BleDisconnect: () => this.BleDisconnect(),
   };
+
+  ble = new Ble()
   
-  componentDidMount() {
+  componentDidMount() {  
     this.setScreenHeight()
     this.requestPermissions()
     // this.subscribeToLocation()
-    this.subscribeToBackgroundLocation()
+    setTimeout(() => {
+      this.subscribeToBackgroundLocation()
+      this.moveTo('right');
+    }, 3000);
     this.setSkipIntro()
   }
 
@@ -77,114 +82,12 @@ export default class App extends React.Component {
     });
   }
 
-  BleConnect = async () => {
+  bleConnect = () => {
     this.setState({
       bleConnecting: true,
       confirmedConnection: false
     })
-    await BleManager.start({showAlert: false})
-    await BleManager.scan([], 3, true).then(() => {
-      console.log("Scan started ...");
-    });
-    setTimeout(() => {
-      BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
-        if (peripheralsArray.length > 1) {
-          peripheralsArray.forEach((peripheral) => {
-            if (peripheral.name === "DSDTECH HM-10") {
-              BleManager.connect(peripheral.id).then(() => {
-                BleManager.retrieveServices(peripheral.id).then(async (peripheralInfo) => {
-                  this.setState({
-                    peripheralId: peripheral.id,
-                    peripheralInfo: peripheralInfo
-                  })
-                  this.BleStartNotification()
-                  this.BleListen()
-                  await this.setState({confirmedConnection: false})
-                  console.log('Attempting to confirm connection ...');
-                  const interval = setInterval(() => {
-                    if (this.state.confirmedConnection) {
-                      this.setState({
-                        bleConnected: true,
-                        bleConnecting: false
-                      })
-                      this.sendData()
-                      BackgroundTimer.runBackgroundTimer(() => { 
-                        this.sendData()
-                      }, 5000)
-                      clearInterval(interval)
-                    } else {
-                      this.BleWrite("connect")
-                    }
-                  }, 1000);
-                });
-              })
-            }
-          })
-        } else {
-          console.log("Could not find crow prototype");
-          this.setState({bleConnecting: false})
-        }
-      });
-    }, 3000)
-  }
-
-  BleDisconnect = async () => {
-    BackgroundTimer.stopBackgroundTimer()
-    await this.setState({
-      initiateDisconnection: false,
-      bleDisconnecting: true
-    })
-    const interval = setInterval(async () => {
-      if (this.state.initiateDisconnection) {
-        if (this.subscription) { await this.subscription.remove() }
-        BleManager.disconnect(this.state.peripheralId)
-        .catch((error) => {
-          console.log(error);
-        })
-        this.setState({bleConnected: false})
-        this.setState({bleDisconnecting: false})
-        clearInterval(interval)
-      } else {
-        console.log('attempting to initiate disconnection ...');
-        this.BleWrite("disconnect")
-      }
-    }, 1000);
-  }
-
-  BleStartNotification = () => {
-    const { peripheralInfo, peripheralId } = this.state
-    const serviceUUID = peripheralInfo.characteristics[0].service
-    const characteristicUUID = peripheralInfo.characteristics[0].characteristic
-    BleManager.startNotification(peripheralId, serviceUUID, characteristicUUID)
-    .catch((error) => {
-      console.log(error);
-    })
-  }
-
-  BleWrite = (data) => {
-    const { peripheralInfo, peripheralId } = this.state
-    const serviceUUID = peripheralInfo.characteristics[0].service
-    const characteristicUUID = peripheralInfo.characteristics[0].characteristic
-    const byteData = stringToBytes(`{${data}}`)
-    BleManager.writeWithoutResponse(peripheralId, serviceUUID, characteristicUUID, byteData)
-    .catch((e) => {
-      console.log(e);
-    })    
-  }
-
-  BleListen = () => {    
-    const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
-    this.subscription = bleManagerEmitter.addListener(
-      'BleManagerDidUpdateValueForCharacteristic',
-      ({ value }) => {
-        console.log('received:', bytesToString(value));        
-        if (bytesToString(value).includes("confirmedConnection")) {
-          this.setState({confirmedConnection: true})        
-        } else if (bytesToString(value).includes("initDisconnection")) {
-          this.setState({initiateDisconnection: true})
-        }
-      }
-    );
+    this.ble.connect()
   }
 
   sendData() {
@@ -261,22 +164,6 @@ export default class App extends React.Component {
   requestPermissions = () => {
     Permissions.askAsync(Permissions.LOCATION);
   };
-
-  // subscribeToLocation = async () => {
-  //   setTimeout(() => {
-  //     Location.watchPositionAsync(
-  //       {
-  //         enableHighAccuracy: true,
-  //         distanceInterval: 5,
-  //       },
-  //       async data => {
-  //         const location = [data.coords.latitude, data.coords.longitude];
-  //         await this.setState({ location });
-  //       },
-  //     );
-  //     this.moveTo('right');
-  //   }, 3000);
-  // };
 
   loadResourcesAsync = async () => {
     return Promise.all([
