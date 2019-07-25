@@ -1,6 +1,0 @@
-module Pods_crow {
-  umbrella header "Pods-crow-umbrella.h"
-
-  export *
-  module * { export * }
-}

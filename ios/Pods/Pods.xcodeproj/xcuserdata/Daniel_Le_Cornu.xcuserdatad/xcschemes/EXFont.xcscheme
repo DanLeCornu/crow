@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1020"
+   LastUpgradeVersion = "1100"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BD4C91A7C3DE402B9C72CF314ABF3885"
+               BlueprintIdentifier = "90B94D4DBCFD756F121D9368AF50E90B"
                BuildableName = "libEXFont.a"
                BlueprintName = "EXFont"
                ReferencedContainer = "container:Pods.xcodeproj">

@@ -2,7 +2,9 @@
 
 #import "EXEnvironment.h"
 #import "EXHomeModule.h"
+#import "EXSession.h"
 #import "EXUnversioned.h"
+#import "EXProvisioningProfile.h"
 
 #import <React/RCTEventDispatcher.h>
 
@@ -13,6 +15,8 @@
 @property (nonatomic, strong) NSMutableDictionary *eventFailureBlocks;
 @property (nonatomic, strong) NSArray * _Nonnull sdkVersions;
 @property (nonatomic, weak) id<EXHomeModuleDelegate> delegate;
+
++ (EXClientReleaseType)clientReleaseType;
 
 @end
 
@@ -38,7 +42,8 @@
 
 - (NSDictionary *)constantsToExport
 {
-  return @{ @"sdkVersions": _sdkVersions };
+  return @{ @"sdkVersions": _sdkVersions,
+            @"IOSClientReleaseType": [EXProvisioningProfile clientReleaseTypeToString: [EXProvisioningProfile clientReleaseType]] };
 }
 
 #pragma mark - RCTEventEmitter methods
@@ -64,14 +69,14 @@
 {
   NSString *qualifiedEventName = [NSString stringWithFormat:@"ExponentKernel.%@", eventName];
   NSMutableDictionary *qualifiedEventBody = (eventBody) ? [eventBody mutableCopy] : [NSMutableDictionary dictionary];
-
+  
   if (success && failure) {
     NSString *eventId = [[NSUUID UUID] UUIDString];
     [_eventSuccessBlocks setObject:success forKey:eventId];
     [_eventFailureBlocks setObject:failure forKey:eventId];
     [qualifiedEventBody setObject:eventId forKey:@"eventId"];
   }
-
+  
   [self sendEventWithName:qualifiedEventName body:qualifiedEventBody];
 }
 
@@ -170,14 +175,39 @@ RCT_EXPORT_METHOD(selectQRReader)
   }
 }
 
-RCT_EXPORT_METHOD(setSessionSecret:(NSString *)sessionSecret)
+RCT_REMAP_METHOD(getSessionAsync,
+                 getSessionAsync:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
-  [EXEnvironment sharedEnvironment].sessionSecret = sessionSecret;
+  NSDictionary *session = [[EXSession sharedInstance] session];
+  resolve(session);
 }
 
-RCT_EXPORT_METHOD(removeSessionSecret)
+RCT_REMAP_METHOD(setSessionAsync,
+                 setSessionAsync:(NSDictionary *)session
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
-  [EXEnvironment sharedEnvironment].sessionSecret = nil;
+  NSError *error;
+  BOOL success = [[EXSession sharedInstance] saveSessionToKeychain:session error:&error];
+  if (success) {
+    resolve(nil);
+  } else {
+    reject(@"ERR_SESSION_NOT_SAVED", @"Could not save session", error);
+  }
+}
+
+RCT_REMAP_METHOD(removeSessionAsync,
+                 removeSessionAsync:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSError *error;
+  BOOL success = [[EXSession sharedInstance] deleteSessionFromKeychainWithError:&error];
+  if (success) {
+    resolve(nil);
+  } else {
+    reject(@"ERR_SESSION_NOT_REMOVED", @"Could not remove session", error);
+  }
 }
 
 RCT_EXPORT_METHOD(addDevMenu)

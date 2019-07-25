@@ -1,6 +1,6 @@
 import React from 'react';
 import { Animated } from 'react-native';
-import { Location } from 'expo';
+import * as Location from 'expo-location';
 import throttle from 'lodash.throttle'
 import AppContext from '../AppContext';
 import { calcBearing } from '../services/bearing'

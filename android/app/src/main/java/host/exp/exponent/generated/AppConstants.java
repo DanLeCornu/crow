@@ -11,12 +11,11 @@ import host.exp.exponent.Constants;
 @DoNotStrip
 public class AppConstants {
 
-  public static final String VERSION_NAME = "2.9.2";
+  public static final String VERSION_NAME = "2.11.4";
   public static String INITIAL_URL = "exp://exp.host/@nqdan/crow";
-  public static final boolean IS_DETACHED = true;
   public static final String SHELL_APP_SCHEME = "exp501e0e9c46f648a7ace61b0b4e6b41dd";
   public static final String RELEASE_CHANNEL = "default";
-  public static boolean SHOW_LOADING_VIEW_IN_SHELL_APP = false;
+  public static boolean SHOW_LOADING_VIEW_IN_SHELL_APP = true;
   public static boolean ARE_REMOTE_UPDATES_ENABLED = true;
   public static final List<Constants.EmbeddedResponse> EMBEDDED_RESPONSES;
   public static boolean FCM_ENABLED = false;
@@ -35,7 +34,6 @@ public class AppConstants {
     Constants.ExpoViewAppConstants constants = new Constants.ExpoViewAppConstants();
     constants.VERSION_NAME = VERSION_NAME;
     constants.INITIAL_URL = INITIAL_URL;
-    constants.IS_DETACHED = IS_DETACHED;
     constants.SHELL_APP_SCHEME = SHELL_APP_SCHEME;
     constants.RELEASE_CHANNEL = RELEASE_CHANNEL;
     constants.SHOW_LOADING_VIEW_IN_SHELL_APP = SHOW_LOADING_VIEW_IN_SHELL_APP;

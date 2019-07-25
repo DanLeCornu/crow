@@ -1,20 +1,20 @@
 package host.exp.exponent;
 
-
 import com.facebook.react.ReactPackage;
+
+import org.unimodules.core.interfaces.Package;
 
 import java.util.Arrays;
 import java.util.List;
 
-import expolib_v1.okhttp3.OkHttpClient;
+import expo.loaders.provider.interfaces.AppLoaderPackagesProviderInterface;
+import host.exp.exponent.generated.BasePackageList;
+import okhttp3.OkHttpClient;
 
 // Needed for `react-native link`
 // import com.facebook.react.ReactApplication;
-import com.ocetnik.timer.BackgroundTimerPackage;
-import it.innove.BleManagerPackage;
-import com.polidea.reactnativeble.BlePackage;
 
-public class MainApplication extends ExpoApplication {
+public class MainApplication extends ExpoApplication implements AppLoaderPackagesProviderInterface<ReactPackage> {
 
   @Override
   public boolean isDebug() {
@@ -28,21 +28,17 @@ public class MainApplication extends ExpoApplication {
         // TODO: add native modules!
 
         // Needed for `react-native link`
-        // new MainReactPackage(),
-            new BackgroundTimerPackage(),
-            new BleManagerPackage(),
-            new BlePackage()
+        // new MainReactPackage()
     );
+  }
+
+  public List<Package> getExpoPackages() {
+    return new BasePackageList().getPackageList();
   }
 
   @Override
   public String gcmSenderId() {
     return getString(R.string.gcm_defaultSenderId);
-  }
-
-  @Override
-  public boolean shouldUseInternetKernel() {
-    return BuildVariantConstants.USE_INTERNET_KERNEL;
   }
 
   public static OkHttpClient.Builder okHttpClientBuilder(OkHttpClient.Builder builder) {

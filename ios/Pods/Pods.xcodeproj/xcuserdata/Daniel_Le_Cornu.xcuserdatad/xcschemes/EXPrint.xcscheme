@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1020"
+   LastUpgradeVersion = "1100"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "36FD10779C2619D8E751BC2E76A8AB43"
+               BlueprintIdentifier = "5003CBFB1E246347E17AB9284482AD42"
                BuildableName = "libEXPrint.a"
                BlueprintName = "EXPrint"
                ReferencedContainer = "container:Pods.xcodeproj">

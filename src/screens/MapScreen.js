@@ -1,8 +1,8 @@
 import React from 'react';
-import { MapView, LinearGradient } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Animated, Linking, Dimensions } from 'react-native';
 import { CustomText } from '../components/CustomText'
-import { Marker } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
 import styled from 'styled-components';
 

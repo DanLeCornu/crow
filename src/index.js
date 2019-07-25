@@ -1,6 +1,13 @@
 import React from 'react'
 import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, NativeEventEmitter } from 'react-native'
-import { AppLoading, Asset, Font, Location, Permissions } from 'expo'
+
+import { AppLoading } from 'expo';
+import { Asset } from 'expo-asset';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import * as Font from 'expo-font';
+import * as TaskManager from 'expo-task-manager';
+
 import AppContext from './AppContext'
 import LoadingScreen from './screens/LoadingScreen'
 import IntroScreen from './screens/IntroScreen'
@@ -12,6 +19,18 @@ import { stringToBytes, bytesToString } from 'convert-string'
 import BackgroundTimer from 'react-native-background-timer'
 
 import styled from 'styled-components';
+
+const LOCATION_TASK_NAME = 'background-location-task';
+
+TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
+  if (error) {
+    console.log(error.message);
+  }
+  if (data) {
+    const { locations } = data;
+    console.log('background location:', locations);
+  }
+});
 
 export default class App extends React.Component {
   state = {
@@ -41,7 +60,8 @@ export default class App extends React.Component {
   componentDidMount() {
     this.setScreenHeight()
     this.requestPermissions()
-    this.subscribeToLocation()
+    // this.subscribeToLocation()
+    this.subscribeToBackgroundLocation()
     this.setSkipIntro()
   }
 
@@ -50,6 +70,12 @@ export default class App extends React.Component {
       this.setDistance()
     }
   };
+
+  subscribeToBackgroundLocation = async () => {
+    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+      accuracy: Location.Accuracy.Balanced,
+    });
+  }
 
   BleConnect = async () => {
     this.setState({
@@ -153,11 +179,9 @@ export default class App extends React.Component {
       ({ value }) => {
         console.log('received:', bytesToString(value));        
         if (bytesToString(value).includes("confirmedConnection")) {
-          this.setState({confirmedConnection: true})
-          console.log('CONFIRMED CONNECTION');          
+          this.setState({confirmedConnection: true})        
         } else if (bytesToString(value).includes("initDisconnection")) {
           this.setState({initiateDisconnection: true})
-          console.log('CONFIRMED DISCONNECTION');
         }
       }
     );
@@ -238,21 +262,21 @@ export default class App extends React.Component {
     Permissions.askAsync(Permissions.LOCATION);
   };
 
-  subscribeToLocation = async () => {
-    setTimeout(() => {
-      Location.watchPositionAsync(
-        {
-          enableHighAccuracy: true,
-          distanceInterval: 5,
-        },
-        async data => {
-          const location = [data.coords.latitude, data.coords.longitude];
-          await this.setState({ location });
-        },
-      );
-      this.moveTo('right');
-    }, 3000);
-  };
+  // subscribeToLocation = async () => {
+  //   setTimeout(() => {
+  //     Location.watchPositionAsync(
+  //       {
+  //         enableHighAccuracy: true,
+  //         distanceInterval: 5,
+  //       },
+  //       async data => {
+  //         const location = [data.coords.latitude, data.coords.longitude];
+  //         await this.setState({ location });
+  //       },
+  //     );
+  //     this.moveTo('right');
+  //   }, 3000);
+  // };
 
   loadResourcesAsync = async () => {
     return Promise.all([

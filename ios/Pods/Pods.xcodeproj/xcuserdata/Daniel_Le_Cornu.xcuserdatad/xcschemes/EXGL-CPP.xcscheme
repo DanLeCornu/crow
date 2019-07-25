@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1020"
+   LastUpgradeVersion = "1100"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9C6DE9AA9660FE1F97DB3238469D088B"
+               BlueprintIdentifier = "7B285D6C7388F487BBD73464C6A36CBE"
                BuildableName = "libEXGL-CPP.a"
                BlueprintName = "EXGL-CPP"
                ReferencedContainer = "container:Pods.xcodeproj">

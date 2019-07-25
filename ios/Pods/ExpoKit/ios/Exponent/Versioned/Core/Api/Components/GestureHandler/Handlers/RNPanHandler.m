@@ -54,7 +54,9 @@
     _failOffsetYStart = NAN;
     _failOffsetYEnd = NAN;
     _hasCustomActivationCriteria = NO;
+#if !TARGET_OS_TV
     _realMinimumNumberOfTouches = self.minimumNumberOfTouches;
+#endif
   }
   return self;
 }
@@ -66,6 +68,7 @@
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
+#if !TARGET_OS_TV
   if (_hasCustomActivationCriteria) {
     // We use "minimumNumberOfTouches" property to prevent pan handler from recognizing
     // the gesture too early before we are sure that all criteria (e.g. minimum distance
@@ -74,6 +77,7 @@
   } else {
     super.minimumNumberOfTouches = _realMinimumNumberOfTouches;
   }
+#endif
   [super touchesBegan:touches withEvent:event];
 }
 
@@ -84,9 +88,8 @@
     self.state = UIGestureRecognizerStateFailed;
     return;
   }
-  if ((self.state == UIGestureRecognizerStatePossible || self.state == UIGestureRecognizerStateChanged) && _gestureHandler.shouldCancelWhenOutside) {
-    CGPoint pt = [self locationInView:self.view];
-    if (!CGRectContainsPoint(self.view.bounds, pt)) {
+  if ((self.state == UIGestureRecognizerStatePossible || self.state == UIGestureRecognizerStateChanged)) {
+    if (_gestureHandler.shouldCancelWhenOutside && ![_gestureHandler containsPointInView]) {
       // If the previous recognizer state is UIGestureRecognizerStateChanged
       // then UIGestureRecognizer's sate machine will only transition to
       // UIGestureRecognizerStateCancelled even if you set the state to
@@ -99,11 +102,13 @@
     }
   }
   if (_hasCustomActivationCriteria && self.state == UIGestureRecognizerStatePossible && [self shouldActivateUnderCustomCriteria]) {
+#if !TARGET_OS_TV
     super.minimumNumberOfTouches = _realMinimumNumberOfTouches;
     if ([self numberOfTouches] >= _realMinimumNumberOfTouches) {
       self.state = UIGestureRecognizerStateBegan;
       [self setTranslation:CGPointMake(0, 0) inView:self.view];
     }
+#endif
   }
 }
 
@@ -117,45 +122,41 @@
 {
   _hasCustomActivationCriteria = !isnan(_minDistSq)
   || !isnan(_minVelocityX) || !isnan(_minVelocityY) || !isnan(_minVelocitySq)
-  || !isnan(_activeOffsetXStart) || !isnan(_activeOffsetXEnd) || !isnan(_failOffsetXStart)
-  || !isnan(_failOffsetXEnd) || !isnan(_activeOffsetYStart) || !isnan(_activeOffsetYEnd)
-  || !isnan(_failOffsetYStart) || !isnan(_failOffsetYEnd);
+  || !isnan(_activeOffsetXStart) || !isnan(_activeOffsetXEnd)
+  ||  !isnan(_activeOffsetYStart) || !isnan(_activeOffsetYEnd);
 }
 
 - (BOOL)shouldFailUnderCustomCriteria
 {
   CGPoint trans = [self translationInView:self.view];
-  
-  if (TEST_MIN_IF_NOT_NAN(trans.x, _failOffsetXStart)) {
+  if (!isnan(_failOffsetXStart) && trans.x < _failOffsetXStart) {
     return YES;
   }
-  if (TEST_MAX_IF_NOT_NAN(trans.x, _failOffsetXEnd)) {
+  if (!isnan(_failOffsetXEnd) && trans.x > _failOffsetXEnd) {
     return YES;
   }
-  if (TEST_MIN_IF_NOT_NAN(trans.y, _failOffsetYStart)) {
+  if (!isnan(_failOffsetYStart) && trans.y < _failOffsetYStart) {
     return YES;
   }
-  if (TEST_MAX_IF_NOT_NAN(trans.y, _failOffsetYEnd)) {
+  if (!isnan(_failOffsetYEnd) && trans.y > _failOffsetYEnd) {
     return YES;
   }
-  
-  
   return NO;
 }
 
 - (BOOL)shouldActivateUnderCustomCriteria
 {
   CGPoint trans = [self translationInView:self.view];
-  if (TEST_MIN_IF_NOT_NAN(trans.x, _activeOffsetXStart)) {
+  if (!isnan(_activeOffsetXStart) && trans.x < _activeOffsetXStart) {
     return YES;
   }
-  if (TEST_MAX_IF_NOT_NAN(trans.x, _activeOffsetXEnd)) {
+  if (!isnan(_activeOffsetXEnd) && trans.x > _activeOffsetXEnd) {
     return YES;
   }
-  if (TEST_MIN_IF_NOT_NAN(trans.y, _activeOffsetYStart)) {
+  if (!isnan(_activeOffsetYStart) && trans.y < _activeOffsetYStart) {
     return YES;
   }
-  if (TEST_MAX_IF_NOT_NAN(trans.y, _activeOffsetYEnd)) {
+  if (!isnan(_activeOffsetYEnd) && trans.y > _activeOffsetYEnd) {
     return YES;
   }
   
@@ -205,10 +206,11 @@
   APPLY_FLOAT_PROP(failOffsetYStart);
   APPLY_FLOAT_PROP(failOffsetYEnd);
   
-  
+#if !TARGET_OS_TV
   APPLY_NAMED_INT_PROP(minimumNumberOfTouches, @"minPointers");
   APPLY_NAMED_INT_PROP(maximumNumberOfTouches, @"maxPointers");
-  
+#endif
+    
   id prop = config[@"minDist"];
   if (prop != nil) {
     CGFloat dist = [RCTConvert CGFloat:prop];

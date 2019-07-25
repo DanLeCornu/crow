@@ -1,9 +1,12 @@
 // Copyright 2015-present 650 Industries. All rights reserved.
 
 #import "EXEnvironment.h"
+#import "EXHomeModule.h"
 #import "EXFileDownloader.h"
+#import "EXSession.h"
 #import "EXVersions.h"
 #import "EXKernelUtil.h"
+#import "EXProvisioningProfile.h"
 
 #import <React/RCTUtils.h>
 
@@ -95,6 +98,8 @@ NSTimeInterval const EXFileDownloaderDefaultTimeoutInterval = 60;
     clientEnvironment = @"EXPO_SIMULATOR";
 #endif
   }
+  NSString * clientReleaseType= [EXProvisioningProfile clientReleaseTypeToString:[EXProvisioningProfile clientReleaseType]];
+  
   [request setValue:releaseChannel forHTTPHeaderField:@"Expo-Release-Channel"];
   [request setValue:@"true" forHTTPHeaderField:@"Expo-JSON-Error"];
   [request setValue:requestAbiVersion forHTTPHeaderField:@"Exponent-SDK-Version"];
@@ -103,8 +108,9 @@ NSTimeInterval const EXFileDownloaderDefaultTimeoutInterval = 60;
   [request setValue:@"application/expo+json,application/json" forHTTPHeaderField:@"Accept"];
   [request setValue:@"1" forHTTPHeaderField:@"Expo-Api-Version"];
   [request setValue:clientEnvironment forHTTPHeaderField:@"Expo-Client-Environment"];
+  [request setValue:clientReleaseType forHTTPHeaderField:@"Expo-Client-Release-Type"];
 
-  NSString *sessionSecret = [EXEnvironment sharedEnvironment].sessionSecret;
+  NSString *sessionSecret = [[EXSession sharedInstance] sessionSecret];
   if (sessionSecret) {
     [request setValue:sessionSecret forHTTPHeaderField:@"Expo-Session"];
   }
