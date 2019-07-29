@@ -3,7 +3,7 @@ import { Animated } from 'react-native';
 import * as Location from 'expo-location';
 import throttle from 'lodash.throttle'
 import AppContext from '../AppContext';
-import { calcBearing } from '../services/bearing'
+import { calcBearing } from '../services/calcBearing'
 
 import styled from 'styled-components';
 

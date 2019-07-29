@@ -4,8 +4,10 @@ import BackgroundTimer from 'react-native-background-timer'
 import { stringToBytes, bytesToString } from 'convert-string'
 
 export default class Ble {
+  confirmedConnection = false
+  initiateDisconnection = false
 
-  connect = async () => {
+  connect = async (handleSetPeripheral, handleConfirmedConnection, sendData, confirmConnection, handleConnectionFailure) => {
     await BleManager.start({showAlert: false})
     await BleManager.scan([], 3, true).then(() => {
       console.log("Scan started ...");
@@ -17,27 +19,21 @@ export default class Ble {
             if (peripheral.name === "DSDTECH HM-10") {
               BleManager.connect(peripheral.id).then(() => {
                 BleManager.retrieveServices(peripheral.id).then(async (peripheralInfo) => {
-                  this.setState({
-                    peripheralId: peripheral.id,
-                    peripheralInfo: peripheralInfo
-                  })
-                  this.BleStartNotification()
-                  this.BleListen()
-                  await this.setState({confirmedConnection: false})
+                  handleSetPeripheral(peripheral.id, peripheralInfo)
+                  this.startNotification(peripheral.id, peripheralInfo)
+                  this.listen()
+                  confirmedConnection = false
                   console.log('Attempting to confirm connection ...');
                   const interval = setInterval(() => {
-                    if (this.state.confirmedConnection) {
-                      this.setState({
-                        bleConnected: true,
-                        bleConnecting: false
-                      })
-                      this.sendData()
+                    if (confirmedConnection) {
+                      handleConfirmedConnection()
+                      sendData()
                       BackgroundTimer.runBackgroundTimer(() => { 
-                        this.sendData()
+                        sendData()
                       }, 5000)
                       clearInterval(interval)
                     } else {
-                      this.BleWrite("connect")
+                      confirmConnection()
                     }
                   }, 1000);
                 });
@@ -46,37 +42,13 @@ export default class Ble {
           })
         } else {
           console.log("Could not find crow prototype");
-          this.setState({bleConnecting: false})
+          handleConnectionFailure()
         }
       });
     }, 3000)
   }
 
-  disconnect = async () => {
-    BackgroundTimer.stopBackgroundTimer()
-    await this.setState({
-      initiateDisconnection: false,
-      bleDisconnecting: true
-    })
-    const interval = setInterval(async () => {
-      if (this.state.initiateDisconnection) {
-        if (this.subscription) { await this.subscription.remove() }
-        BleManager.disconnect(this.state.peripheralId)
-        .catch((error) => {
-          console.log(error);
-        })
-        this.setState({bleConnected: false})
-        this.setState({bleDisconnecting: false})
-        clearInterval(interval)
-      } else {
-        console.log('attempting to initiate disconnection ...');
-        this.BleWrite("disconnect")
-      }
-    }, 1000);
-  }
-
-  startNotification = () => {
-    const { peripheralInfo, peripheralId } = this.state
+  startNotification = (peripheralId, peripheralInfo) => {
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
     BleManager.startNotification(peripheralId, serviceUUID, characteristicUUID)
@@ -85,8 +57,22 @@ export default class Ble {
     })
   }
 
-  write = (data) => {
-    const { peripheralInfo, peripheralId } = this.state
+  listen = () => {    
+    const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
+    this.subscription = bleManagerEmitter.addListener(
+      'BleManagerDidUpdateValueForCharacteristic',
+      ({ value }) => {
+        console.log('received:', bytesToString(value))
+        if (bytesToString(value).includes("confirmedConnection")) {
+          confirmedConnection = true
+        } else if (bytesToString(value).includes("initDisconnection")) {
+          initiateDisconnection = true
+        }
+      }
+    );
+  }
+
+  write = (peripheralId, peripheralInfo, data) => {
     const serviceUUID = peripheralInfo.characteristics[0].service
     const characteristicUUID = peripheralInfo.characteristics[0].characteristic
     const byteData = stringToBytes(`{${data}}`)
@@ -96,19 +82,24 @@ export default class Ble {
     })    
   }
 
-  listen = () => {    
-    const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
-    this.subscription = bleManagerEmitter.addListener(
-      'BleManagerDidUpdateValueForCharacteristic',
-      ({ value }) => {
-        console.log('received:', bytesToString(value));        
-        if (bytesToString(value).includes("confirmedConnection")) {
-          this.setState({confirmedConnection: true})        
-        } else if (bytesToString(value).includes("initDisconnection")) {
-          this.setState({initiateDisconnection: true})
-        }
+  disconnect = async (handleSetBleDisconnecting, handleInitiateDisconnection, peripheralId, handleConfirmedDisconnection) => {
+    BackgroundTimer.stopBackgroundTimer()
+    initiateDisconnection = false
+    await handleSetBleDisconnecting()
+    const interval = setInterval(async () => {
+      if (initiateDisconnection) {
+        if (this.subscription) { await this.subscription.remove() }
+        BleManager.disconnect(peripheralId)
+        .catch((error) => {
+          console.log(error);
+        })
+        handleConfirmedDisconnection()
+        clearInterval(interval)
+      } else {
+        console.log('attempting to initiate disconnection ...');
+        handleInitiateDisconnection()
       }
-    );
+    }, 1000);
   }
 }
 

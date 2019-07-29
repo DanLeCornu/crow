@@ -1,5 +1,5 @@
 import React from 'react'
-import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native'
+import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, AppState } from 'react-native'
 
 import { AppLoading } from 'expo';
 import { Asset } from 'expo-asset';
@@ -13,12 +13,13 @@ import LoadingScreen from './screens/LoadingScreen'
 import IntroScreen from './screens/IntroScreen'
 import MapScreen from './screens/MapScreen'
 import CompassScreen from './screens/CompassScreen'
-import Geolib from 'geolib'
 import Ble from './services/Ble'
+import { calcDistance } from './services/calcDistance'
 
 import styled from 'styled-components';
 
 const LOCATION_TASK_NAME = 'background-location-task';
+let LOCATION = []
 
 TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
   if (error) {
@@ -26,11 +27,9 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
   }
   if (data) {
     const { locations } = data
-    const location = [locations[0].coords.latitude, locations[0].coords.longitude];
-    console.log(location);
+    LOCATION = [locations[0].coords.latitude, locations[0].coords.longitude];
   }
-});
-
+})
 
 export default class App extends React.Component {
   state = {
@@ -47,22 +46,20 @@ export default class App extends React.Component {
     bleDisconnecting: false,
     peripheralId: null,
     peripheralInfo: null,
-    confirmedConnection: false,
-    initiateDisconnection: false,
     screenXPosition: new Animated.Value(0),
     setRoute: d => this.setRoute(d),
     moveTo: d => this.moveTo(d),
     storeData: (k,v) => this.storeData(k,v),
-    BleConnect: () => this.BleConnect(),
-    BleDisconnect: () => this.BleDisconnect(),
+    connect: () => this.connect(),
+    disconnect: () => this.disconnect(),
   };
 
   ble = new Ble()
   
-  componentDidMount() {  
+  componentDidMount() {
     this.setScreenHeight()
     this.requestPermissions()
-    // this.subscribeToLocation()
+    this.subscribeToLocation()
     setTimeout(() => {
       this.subscribeToBackgroundLocation()
       this.moveTo('right');
@@ -76,23 +73,96 @@ export default class App extends React.Component {
     }
   };
 
+  subscribeToLocation = async () => {
+    setTimeout(() => {
+      Location.watchPositionAsync(
+        {
+          enableHighAccuracy: true,
+          distanceInterval: 5,
+        },
+        async data => {
+          const location = [data.coords.latitude, data.coords.longitude];
+          await this.setState({ location });
+        },
+      );
+      this.moveTo('right');
+    }, 3000);
+  };
+
   subscribeToBackgroundLocation = async () => {
     await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
       accuracy: Location.Accuracy.Balanced,
+      distanceInterval: 5
     });
   }
 
-  bleConnect = () => {
-    this.setState({
-      bleConnecting: true,
-      confirmedConnection: false
-    })
-    this.ble.connect()
+  connect = () => {
+    this.setState({ bleConnecting: true })
+    this.ble.connect(
+      this.handleSetPeripheral,
+      this.handleConfirmedConnection,
+      this.sendData,
+      this.confirmConnection,
+      this.handleConnectionFailure
+    )
   }
 
-  sendData() {
-    const data = `${this.state.location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
-    this.BleWrite(data)
+  handleSetPeripheral = (peripheralId, peripheralInfo) => {
+    this.setState({ peripheralId, peripheralInfo })
+  }
+
+  handleConfirmedConnection = () => {
+    this.setState({
+      bleConnected: true,
+      bleConnecting: false
+    })
+  }
+
+  sendData = () => {
+    let location
+    if (AppState.currentState == "background") {
+      location = LOCATION
+    } else {
+      location = this.state.location
+    }
+    const data = `${location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
+    const peripheralId = this.state.peripheralId
+    const peripheralInfo = this.state.peripheralInfo
+    this.ble.write(peripheralId, peripheralInfo, data)
+  }
+
+  confirmConnection = () => {
+    const peripheralId = this.state.peripheralId
+    const peripheralInfo = this.state.peripheralInfo
+    this.ble.write(peripheralId, peripheralInfo, "connect")
+  }
+
+  handleConnectionFailure = () => {
+    this.setState({bleConnecting: false})
+  }
+
+  disconnect = () => {
+    this.ble.disconnect(
+      this.handleSetBleDisconnecting,
+      this.handleInitiateDisconnection,
+      this.state.peripheralId,
+      this.handleConfirmedDisconnection
+    )
+  }
+
+  handleSetBleDisconnecting = () => {
+    this.setState({ bleDisconnecting: true })
+  }
+
+  handleInitiateDisconnection = () => {
+    const peripheralId = this.state.peripheralId
+    const peripheralInfo = this.state.peripheralInfo
+    this.ble.write(peripheralId, peripheralInfo, "disconnect")
+  }
+
+  handleConfirmedDisconnection = () => {
+    this.setState({ bleConnected: false })
+    this.setState({ bleDisconnecting: false })
   }
 
   setSkipIntro = async () => {
@@ -122,27 +192,13 @@ export default class App extends React.Component {
   };
 
   setTotalTripDistance = async () => {
-    const totalTripDistance = await this.calcDistance(this.state.location, this.state.destination)
+    const totalTripDistance = await calcDistance(this.state.location, this.state.destination)
     this.setState({ totalTripDistance })
   }
 
   setDistance = async () => {
-    const distance = await this.calcDistance(this.state.location, this.state.destination)
+    const distance = await calcDistance(this.state.location, this.state.destination)
     this.setState({ distance })
-  }
-
-  calcDistance = (start, finish) => {
-    let distanceM = Geolib.getDistance(
-      {
-        latitude: start[0],
-        longitude: start[1],
-      },
-      {
-        latitude: finish[0],
-        longitude: finish[1],
-      },
-    )
-    return (distanceM / 1000).toFixed(2);
   }
 
   moveTo = direction => {
