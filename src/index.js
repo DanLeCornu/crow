@@ -152,14 +152,16 @@ export default class App extends React.Component {
     })
   }
 
-  sendData = () => {
+  sendData = async () => {
     let location
     if (AppState.currentState == "background") {
-      location = retrieveData('location')
+      const locationLat = await retrieveData('locationLat')
+      const locationLon = await retrieveData('locationLon')
+      location = [parseFloat(locationLat), parseFloat(locationLon)]
     } else {
       location = this.state.location
     }
-    const data = `${location.map((e) => {return e.toFixed(4)})},${this.state.destination.map((e) => {return e.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
+    const data = `${location.map((c) => {return c.toFixed(4)})},${this.state.destination.map((c) => {return c.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
     const peripheralId = this.state.peripheralId
     const peripheralInfo = this.state.peripheralInfo
     this.ble.write(peripheralId, peripheralInfo, data)

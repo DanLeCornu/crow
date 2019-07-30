@@ -22,15 +22,15 @@ export default class Ble {
                   handleSetPeripheral(peripheral.id, peripheralInfo)
                   this.startNotification(peripheral.id, peripheralInfo)
                   this.listen()
-                  confirmedConnection = false
+                  this.confirmedConnection = false
                   console.log('Attempting to confirm connection ...');
                   const interval = setInterval(() => {
-                    if (confirmedConnection) {
+                    if (this.confirmedConnection) {
                       handleConfirmedConnection()
                       sendData()
                       BackgroundTimer.runBackgroundTimer(() => { 
                         sendData()
-                      }, 5000)
+                      }, 3000)
                       clearInterval(interval)
                     } else {
                       confirmConnection()
@@ -64,9 +64,9 @@ export default class Ble {
       ({ value }) => {
         console.log('received:', bytesToString(value))
         if (bytesToString(value).includes("confirmedConnection")) {
-          confirmedConnection = true
+          this.confirmedConnection = true
         } else if (bytesToString(value).includes("initDisconnection")) {
-          initiateDisconnection = true
+          this.initiateDisconnection = true
         }
       }
     );
@@ -84,10 +84,10 @@ export default class Ble {
 
   disconnect = async (handleSetBleDisconnecting, handleInitiateDisconnection, peripheralId, handleConfirmedDisconnection) => {
     BackgroundTimer.stopBackgroundTimer()
-    initiateDisconnection = false
+    this.initiateDisconnection = false
     await handleSetBleDisconnecting()
     const interval = setInterval(async () => {
-      if (initiateDisconnection) {
+      if (this.initiateDisconnection) {
         if (this.subscription) { await this.subscription.remove() }
         BleManager.disconnect(peripheralId)
         .catch((error) => {

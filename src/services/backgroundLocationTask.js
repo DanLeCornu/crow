@@ -9,8 +9,8 @@ export const defineBackgroundTask = () => {
     }
     if (data) {
       const { locations } = data
-      const location = [locations[0].coords.latitude, locations[0].coords.longitude];
-      storeData('location', location)
+      storeData('locationLat', locations[0].coords.latitude.toFixed(4))
+      storeData('locationLon', locations[0].coords.longitude.toFixed(4))
     }
   })
 }
