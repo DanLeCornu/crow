@@ -1,10 +1,12 @@
 import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Animated, Linking, Dimensions } from 'react-native';
+import { Animated, Linking, Dimensions, Alert } from 'react-native';
 import { CustomText } from '../components/CustomText'
 import MapView, { Marker } from 'react-native-maps';
 import AppContext from '../AppContext';
 import styled from 'styled-components';
+
+import { GRANTED, GRANTED_IN_USE } from '../lib/constants'
 
 class MapScreen extends React.Component {
   state = {
@@ -35,8 +37,18 @@ class MapScreen extends React.Component {
     }).start();
   };
 
-  handleConfirmRoute = () => {
-    this.props.moveTo('right')
+  handleConfirmRoute = async () => {
+    await this.props.askLocationPermission()
+    if (this.props.permissionStatus == GRANTED || this.props.permissionStatus == GRANTED_IN_USE) {
+      this.props.moveTo('right')
+    } else (
+      Alert.alert(
+        'Location Permissions',
+        'Hey! We need your permission to access your location, in order for the Crow app to work. Please go to your app settings and select "Always" for location :)',
+        [{ text: 'OK, will do!', onPress: () => { Linking.openURL('app-settings:') }}],
+        { cancelable: false }
+      )
+    )
   }
 
   render() {

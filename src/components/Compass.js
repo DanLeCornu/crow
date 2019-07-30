@@ -9,7 +9,6 @@ import styled from 'styled-components';
 
 class Compass extends React.Component {
   state = {
-    headingSubscription: null,
     heading: null,
     bearing: null,
     arrowRotation: null,
@@ -24,7 +23,7 @@ class Compass extends React.Component {
   }
 
   componentWillUnmount() {
-    this.state.headingSubscription.remove();
+    if (this.subscription) { this.subscription.remove() }
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -35,13 +34,12 @@ class Compass extends React.Component {
   };
 
   subscribeToHeading = async () => {
-    let headingSubscription = await Location.watchHeadingAsync(
+    this.subscription = await Location.watchHeadingAsync(
       throttle(data => {
         let heading = Math.ceil(data.trueHeading);
         this.setState({ heading })
       },25)
     );
-    this.setState({ headingSubscription });
   };
 
   setArrowRotation = () => {

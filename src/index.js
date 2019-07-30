@@ -1,12 +1,11 @@
 import React from 'react'
-import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar, AppState } from 'react-native'
+import { Platform, Animated, Dimensions, NativeModules, StatusBar, AppState, Alert, Linking } from 'react-native'
 
 import { AppLoading } from 'expo';
 import { Asset } from 'expo-asset';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import * as Font from 'expo-font';
-import * as TaskManager from 'expo-task-manager';
 
 import AppContext from './AppContext'
 import LoadingScreen from './screens/LoadingScreen'
@@ -15,27 +14,23 @@ import MapScreen from './screens/MapScreen'
 import CompassScreen from './screens/CompassScreen'
 import Ble from './services/Ble'
 import { calcDistance } from './services/calcDistance'
+import { retrieveData } from './services/localStorage'
+import { defineBackgroundTask } from './services/backgroundLocationTask'
 
 import styled from 'styled-components';
 
-const LOCATION_TASK_NAME = 'background-location-task';
-let LOCATION = []
+import { WAIT, GRANTED, DENIED, GRANTED_IN_USE, BACKGROUND_LOCATION_TASK, } from './lib/constants'
 
-TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
-  if (error) {
-    console.log(error.message);
-  }
-  if (data) {
-    const { locations } = data
-    LOCATION = [locations[0].coords.latitude, locations[0].coords.longitude];
-  }
-})
+defineBackgroundTask()
 
 export default class App extends React.Component {
   state = {
     theme: '#FFE853',
     screenHeight: 0,
     loadingComplete: false,
+    permissionStatus: WAIT,
+    permissionAlert: false,
+    subscribedToForegroundLocation: false,
     skipIntro: false,
     location: null,
     destination: null,
@@ -49,22 +44,19 @@ export default class App extends React.Component {
     screenXPosition: new Animated.Value(0),
     setRoute: d => this.setRoute(d),
     moveTo: d => this.moveTo(d),
-    storeData: (k,v) => this.storeData(k,v),
     connect: () => this.connect(),
     disconnect: () => this.disconnect(),
+    askLocationPermission: () => this.askLocationPermission(),
+    subscribeToForegroundLocation: () => this.subscribeToForegroundLocation(),
+    setPermissionAlert: (status) => this.setPermissionAlert(status),
+    setSkipIntro: () => this.setSkipIntro(),
   };
 
   ble = new Ble()
   
   componentDidMount() {
     this.setScreenHeight()
-    this.requestPermissions()
-    this.subscribeToLocation()
-    setTimeout(() => {
-      this.subscribeToBackgroundLocation()
-      this.moveTo('right');
-    }, 3000);
-    this.setSkipIntro()
+    this.askLocationPermission()
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -73,38 +65,80 @@ export default class App extends React.Component {
     }
   };
 
-  subscribeToLocation = async () => {
-    setTimeout(() => {
-      Location.watchPositionAsync(
-        {
-          enableHighAccuracy: true,
-          distanceInterval: 5,
-        },
-        async data => {
-          const location = [data.coords.latitude, data.coords.longitude];
-          await this.setState({ location });
-        },
-      );
-      this.moveTo('right');
-    }, 3000);
+  setPermissionAlert = (status) => {
+    this.setState({ permissionAlert: status })
+  }
+
+  askLocationPermission = async () => {
+    const { status, permissions } = await Permissions.askAsync(Permissions.LOCATION)
+    switch (status) {
+      case 'granted':
+        if (Platform.OS === 'ios') {
+          const { scope } = permissions.location.ios
+
+          this.setState({
+            permissionStatus: scope === 'always' ? GRANTED : GRANTED_IN_USE,
+          })
+        } else {
+          this.setState({ permissionStatus: GRANTED })
+        }
+        break
+      case 'denied':
+      default:
+        this.setState({ permissionStatus: DENIED })
+        break
+    }
+  }
+
+  subscribeToForegroundLocation = async () => {
+    this.foregroundSubscription = await Location.watchPositionAsync(
+      {
+        enableHighAccuracy: true,
+        distanceInterval: 0,
+        timeInterval: 1000,
+      },
+      async data => {
+        const location = [data.coords.latitude, data.coords.longitude];
+        await this.setState({ location });
+      },
+    );
+    this.setState({ subscribedToForegroundLocation: true })
   };
 
-  subscribeToBackgroundLocation = async () => {
-    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+  subscribeToBackgroundLocation = () => {
+    Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
       accuracy: Location.Accuracy.Balanced,
-      distanceInterval: 5
+      distanceInterval: 5,
     });
   }
 
-  connect = () => {
-    this.setState({ bleConnecting: true })
-    this.ble.connect(
-      this.handleSetPeripheral,
-      this.handleConfirmedConnection,
-      this.sendData,
-      this.confirmConnection,
-      this.handleConnectionFailure
-    )
+  unsubscribeToBackgroundLocation = () => {
+    Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK)
+  }
+
+  connect = async () => {
+    await this.askLocationPermission()
+    if (this.state.permissionStatus == GRANTED) {
+      this.subscribeToBackgroundLocation()
+      if (this.foregroundSubscription) {this.foregroundSubscription.remove()}
+      this.setState({ bleConnecting: true })
+      this.ble.connect(
+        this.handleSetPeripheral,
+        this.handleConfirmedConnection,
+        this.sendData,
+        this.confirmConnection,
+        this.handleConnectionFailure
+      )
+    } else {
+      Alert.alert(
+        'Extra Location Permissions',
+        'Hey! We need your permission to access your location in the background, in order for the Crow bike mount to work. Please go to your app settings and select "Always" for location :)',
+        [
+          { text: 'OK, will do!', onPress: () => {Linking.openURL('app-settings:')} },
+        ],
+        { cancelable: false }
+      )
+    }
   }
 
   handleSetPeripheral = (peripheralId, peripheralInfo) => {
@@ -121,7 +155,7 @@ export default class App extends React.Component {
   sendData = () => {
     let location
     if (AppState.currentState == "background") {
-      location = LOCATION
+      location = retrieveData('location')
     } else {
       location = this.state.location
     }
@@ -148,6 +182,8 @@ export default class App extends React.Component {
       this.state.peripheralId,
       this.handleConfirmedDisconnection
     )
+    this.unsubscribeToBackgroundLocation()
+    this.subscribeToForegroundLocation()
   }
 
   handleSetBleDisconnecting = () => {
@@ -166,8 +202,8 @@ export default class App extends React.Component {
   }
 
   setSkipIntro = async () => {
-    const skipIntro = await this.retrieveData('skipIntro')
-    this.setState({skipIntro})
+    const skipIntro = await retrieveData('skipIntro')
+    this.setState({ skipIntro })
   }
 
   setScreenHeight = () => {
@@ -201,25 +237,21 @@ export default class App extends React.Component {
     this.setState({ distance })
   }
 
-  moveTo = direction => {
+  moveTo = direction => {    
     const currentPosition = this.state.screenXPosition._value
     const screenWidth = Dimensions.get('window').width  
-    if (direction === 'right') {
+    if (direction === 'right') {      
       Animated.timing(this.state.screenXPosition, {
         toValue: currentPosition - screenWidth,
         duration: 300,
       }).start();
-    } else if (direction === 'left') {
+    } else if (direction === 'left') {      
       Animated.timing(this.state.screenXPosition, {
         toValue: currentPosition + screenWidth,
         duration: 300,
       }).start();
     }
   }
-
-  requestPermissions = () => {
-    Permissions.askAsync(Permissions.LOCATION);
-  };
 
   loadResourcesAsync = async () => {
     return Promise.all([
@@ -246,25 +278,6 @@ export default class App extends React.Component {
   finishLoading = () => {
     this.setState({ loadingComplete: true });
   };
-
-  storeData = async (k,v) => {
-    try {
-      await AsyncStorage.setItem(k,v)
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
-
-  retrieveData = async (k) => {
-    try {
-      const value = await AsyncStorage.getItem(k)
-      if (value !== null) {
-        return value
-      }
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
 
   render() {
     if (!this.state.loadingComplete && !this.props.skipLoadingScreen) {
