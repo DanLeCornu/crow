@@ -14,7 +14,7 @@ import MapScreen from './screens/MapScreen'
 import CompassScreen from './screens/CompassScreen'
 import Ble from './services/Ble'
 import { calcDistance } from './services/calcDistance'
-import { retrieveData } from './services/localStorage'
+import { retrieveData, storeData } from './services/localStorage'
 import { defineBackgroundTask } from './services/backgroundLocationTask'
 
 import styled from 'styled-components';
@@ -59,9 +59,10 @@ export default class App extends React.Component {
     this.askLocationPermission()
   }
 
-  componentDidUpdate = (prevProps, prevState) => {
+  componentDidUpdate = (prevState) => {
     if (this.state.destination && (prevState.location != this.state.location)) {
       this.setDistance()
+      console.log('location change, distance updated');
     }
   };
 
@@ -153,17 +154,19 @@ export default class App extends React.Component {
   }
 
   sendData = async () => {
-    let location
+    let location, distance
     if (AppState.currentState == "background") {
       console.log('sending background location');
       const locationLat = await retrieveData('locationLat')
       const locationLon = await retrieveData('locationLon')
       location = [parseFloat(locationLat), parseFloat(locationLon)]
+      distance = await retrieveData('distance')
     } else {
       console.log('sending foreground location');
       location = this.state.location
+      distance = this.state.distance
     }
-    const data = `${location.map((c) => {return c.toFixed(4)})},${this.state.destination.map((c) => {return c.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
+    const data = `${location.map((c) => {return c.toFixed(4)})},${this.state.destination.map((c) => {return c.toFixed(4)})},${distance},${this.state.totalTripDistance}`
     const peripheralId = this.state.peripheralId
     const peripheralInfo = this.state.peripheralInfo
     this.ble.write(peripheralId, peripheralInfo, data)
@@ -184,7 +187,8 @@ export default class App extends React.Component {
       this.handleSetBleDisconnecting,
       this.handleInitiateDisconnection,
       this.state.peripheralId,
-      this.handleConfirmedDisconnection
+      this.handleConfirmedDisconnection,
+      this.handleUnconfirmedDisconnection
     )
     this.unsubscribeToBackgroundLocation()
     this.subscribeToForegroundLocation()
@@ -201,6 +205,11 @@ export default class App extends React.Component {
   }
 
   handleConfirmedDisconnection = () => {
+    this.setState({ bleConnected: false })
+    this.setState({ bleDisconnecting: false })
+  }
+
+  handleUnconfirmedDisconnection = () => {
     this.setState({ bleConnected: false })
     this.setState({ bleDisconnecting: false })
   }
@@ -223,7 +232,9 @@ export default class App extends React.Component {
   }
 
   setRoute = async destination => {
-    await this.setState({ destination });
+    await this.setState({ destination })
+    await storeData('destinationLat', destination[0])
+    await storeData('destinationLon', destination[1])
     await this.setDistance()
     await this.setTotalTripDistance()
     if (this.state.bleConnected) {

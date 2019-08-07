@@ -82,7 +82,7 @@ export default class Ble {
     })    
   }
 
-  disconnect = async (handleSetBleDisconnecting, handleInitiateDisconnection, peripheralId, handleConfirmedDisconnection) => {
+  disconnect = async (handleSetBleDisconnecting, handleInitiateDisconnection, peripheralId, handleConfirmedDisconnection, handleUnconfirmedDisconnection) => {
     BackgroundTimer.stopBackgroundTimer()
     this.initiateDisconnection = false
     await handleSetBleDisconnecting()
@@ -92,6 +92,7 @@ export default class Ble {
         BleManager.disconnect(peripheralId)
         .catch((error) => {
           console.log(error);
+          handleUnconfirmedDisconnection()
         })
         handleConfirmedDisconnection()
         clearInterval(interval)
