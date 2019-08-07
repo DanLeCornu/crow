@@ -60,7 +60,7 @@ export default class App extends React.Component {
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (this.state.destination && prevState.location != this.state.location) {
+    if (this.state.destination && (prevState.location != this.state.location)) {
       this.setDistance()
     }
   };
