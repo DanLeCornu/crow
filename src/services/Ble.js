@@ -9,7 +9,7 @@ export default class Ble {
 
   connect = async (handleSetPeripheral, handleConfirmedConnection, sendData, confirmConnection, handleConnectionFailure) => {
     await BleManager.start({showAlert: false})
-    await BleManager.scan([], 3, true).then(() => {
+    await BleManager.scan([], 5, true).then(() => {
       console.log("Scan started ...");
     });
     setTimeout(() => {
@@ -45,7 +45,7 @@ export default class Ble {
           handleConnectionFailure()
         }
       });
-    }, 3000)
+    }, 5000)
   }
 
   startNotification = (peripheralId, peripheralInfo) => {

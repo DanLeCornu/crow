@@ -14,7 +14,7 @@ class MapScreen extends React.Component {
     markerWidth: Dimensions.get('window').width * 0.10
   };
 
-  handleSetDestination = e => {
+  handleSetDestination = e => {  
     const destination = [
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
@@ -26,14 +26,7 @@ class MapScreen extends React.Component {
   showMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
       toValue: 0,
-      duration: 200,
-    }).start();
-  };
-
-  hideMapActions = () => {
-    Animated.timing(this.state.actionsPosition, {
-      toValue: -200,
-      duration: 200,
+      duration: 400,
     }).start();
   };
 
@@ -211,4 +204,5 @@ const PrivacyButtonImage = styled.Image`
 const MarkerIcon = styled.Image`
   width: ${props => `${props.width}px`};
   height: ${props => `${props.width}px`};
+  margin-bottom: ${props => `${props.width/2}px`};
 `

@@ -155,10 +155,12 @@ export default class App extends React.Component {
   sendData = async () => {
     let location
     if (AppState.currentState == "background") {
+      console.log('sending background location');
       const locationLat = await retrieveData('locationLat')
       const locationLon = await retrieveData('locationLon')
       location = [parseFloat(locationLat), parseFloat(locationLon)]
     } else {
+      console.log('sending foreground location');
       location = this.state.location
     }
     const data = `${location.map((c) => {return c.toFixed(4)})},${this.state.destination.map((c) => {return c.toFixed(4)})},${this.state.distance},${this.state.totalTripDistance}`
