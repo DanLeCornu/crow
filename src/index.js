@@ -59,10 +59,9 @@ export default class App extends React.Component {
     this.askLocationPermission()
   }
 
-  componentDidUpdate = (prevState) => {
+  componentDidUpdate = (prevProps, prevState) => {
     if (this.state.destination && (prevState.location != this.state.location)) {
       this.setDistance()
-      console.log('location change, distance updated');
     }
   };
 
@@ -241,15 +240,15 @@ export default class App extends React.Component {
       this.sendData()
     }
   };
+  
+  setDistance = async () => {
+    const distance = await calcDistance(this.state.location, this.state.destination)
+    this.setState({ distance })
+  }
 
   setTotalTripDistance = async () => {
     const totalTripDistance = await calcDistance(this.state.location, this.state.destination)
     this.setState({ totalTripDistance })
-  }
-
-  setDistance = async () => {
-    const distance = await calcDistance(this.state.location, this.state.destination)
-    this.setState({ distance })
   }
 
   moveTo = direction => {    

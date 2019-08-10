@@ -1,10 +1,10 @@
-import React from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Animated, Linking, Dimensions, Alert } from 'react-native';
+import React from 'react'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Animated, Linking, Dimensions, Alert } from 'react-native'
 import { CustomText } from '../components/CustomText'
-import MapView, { Marker } from 'react-native-maps';
-import AppContext from '../AppContext';
-import styled from 'styled-components';
+import MapView, { Marker } from 'react-native-maps'
+import AppContext from '../AppContext'
+import styled from 'styled-components'
 
 import { GRANTED, GRANTED_IN_USE } from '../lib/constants'
 
@@ -12,22 +12,22 @@ class MapScreen extends React.Component {
   state = {
     actionsPosition: new Animated.Value(-200),
     markerWidth: Dimensions.get('window').width * 0.10
-  };
+  }
 
-  handleSetDestination = e => {  
+  handleSetDestination = e => {
     const destination = [
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-    ];
-    this.props.setRoute(destination);
-    this.showMapActions();
+    ];   
+    this.props.setRoute(destination)
+    this.showMapActions()
   };
 
   showMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
       toValue: 0,
       duration: 400,
-    }).start();
+    }).start()
   };
 
   handleConfirmRoute = async () => {
@@ -45,13 +45,13 @@ class MapScreen extends React.Component {
   }
 
   render() {
-    const { actionsPosition, markerWidth } = this.state;
+    const { actionsPosition, markerWidth } = this.state
     const {
       location,
       destination,
       distance,
       theme,
-    } = this.props;
+    } = this.props
 
     return (
       <Container>
@@ -69,7 +69,7 @@ class MapScreen extends React.Component {
             longitudeDelta: 0.04,
           }}
           onPress={e => {
-            this.handleSetDestination(e);
+            this.handleSetDestination(e)
           }}
         >
           {destination &&
@@ -80,7 +80,7 @@ class MapScreen extends React.Component {
                 longitude: destination[1],
               }}
               onDragEnd={e => {
-                this.handleSetDestination(e);
+                this.handleSetDestination(e)
               }}
             >
               <MarkerIcon
@@ -108,7 +108,7 @@ class MapScreen extends React.Component {
             </ActionsBackground>
           </ActionsContainer>
       </Container>
-    );
+    )
   }
 }
 
@@ -118,7 +118,7 @@ export default class MapScreenContainer extends React.Component {
       <AppContext.Consumer>
         {context => <MapScreen {...context} />}
       </AppContext.Consumer>
-    );
+    )
   }
 }
 
