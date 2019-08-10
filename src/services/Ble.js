@@ -17,7 +17,6 @@ export default class Ble {
     });
     setTimeout(() => {
       BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
-        console.log(peripheralsArray);
         if (peripheralsArray.length > 1) {
           let discoveredCrow = false         
           peripheralsArray.forEach((peripheral) => {
