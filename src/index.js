@@ -42,6 +42,7 @@ export default class App extends React.Component {
     peripheralId: null,
     peripheralInfo: null,
     screenXPosition: new Animated.Value(0),
+    pageTransitioning: false,
     setRoute: d => this.setRoute(d),
     moveTo: d => this.moveTo(d),
     connect: () => this.connect(),
@@ -57,6 +58,7 @@ export default class App extends React.Component {
   componentDidMount() {
     this.setScreenHeight()
     this.askLocationPermission()
+    this.ble.start()
   }
 
   componentDidUpdate = (prevProps, prevState) => {
@@ -90,25 +92,27 @@ export default class App extends React.Component {
     }
   }
 
-  subscribeToForegroundLocation = async () => {
-    this.foregroundSubscription = await Location.watchPositionAsync(
+  subscribeToForegroundLocation = () => {
+    // current bug with this module, have to pass in a value to distance interval in order for timeInterval to work
+    // https://github.com/expo/expo/issues/2682
+    Location.watchPositionAsync(
       {
-        enableHighAccuracy: true,
+        accuracy: Location.Accuracy.Highest,
         distanceInterval: 0,
-        timeInterval: 1000,
+        timeInterval: 2000,
       },
       async data => {
         const location = [data.coords.latitude, data.coords.longitude];
         await this.setState({ location });
       },
     );
-    this.setState({ subscribedToForegroundLocation: true })
   };
 
   subscribeToBackgroundLocation = () => {
     Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-      accuracy: Location.Accuracy.Balanced,
-      distanceInterval: 5,
+      accuracy: Location.Accuracy.Highest,
+      distanceInterval: 0,
+      timeInterval: 2000,
     });
   }
 
@@ -120,7 +124,6 @@ export default class App extends React.Component {
     await this.askLocationPermission()
     if (this.state.permissionStatus == GRANTED) {
       this.subscribeToBackgroundLocation()
-      if (this.foregroundSubscription) {this.foregroundSubscription.remove()}
       this.setState({ bleConnecting: true })
       this.ble.connect(
         this.handleSetPeripheral,
@@ -155,13 +158,11 @@ export default class App extends React.Component {
   sendData = async () => {
     let location, distance
     if (AppState.currentState == "background") {
-      console.log('sending background location');
       const locationLat = await retrieveData('locationLat')
       const locationLon = await retrieveData('locationLon')
       location = [parseFloat(locationLat), parseFloat(locationLon)]
       distance = await retrieveData('distance')
     } else {
-      console.log('sending foreground location');
       location = this.state.location
       distance = this.state.distance
     }
@@ -190,7 +191,6 @@ export default class App extends React.Component {
       this.handleUnconfirmedDisconnection
     )
     this.unsubscribeToBackgroundLocation()
-    this.subscribeToForegroundLocation()
   }
 
   handleSetBleDisconnecting = () => {
@@ -251,7 +251,8 @@ export default class App extends React.Component {
     this.setState({ totalTripDistance })
   }
 
-  moveTo = direction => {    
+  moveTo = direction => {
+    this.setState({pageTransitioning: true})
     const currentPosition = this.state.screenXPosition._value
     const screenWidth = Dimensions.get('window').width  
     if (direction === 'right') {      
@@ -265,6 +266,9 @@ export default class App extends React.Component {
         duration: 300,
       }).start();
     }
+    setTimeout(() => {
+      this.setState({pageTransitioning: false})
+    }, 300)
   }
 
   loadResourcesAsync = async () => {

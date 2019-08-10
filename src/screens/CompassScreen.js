@@ -8,6 +8,12 @@ import Button from '../components/Button'
 
 class CompassScreen extends React.Component {
 
+  handleBackToMap = () => {
+    if (!this.props.pageTransitioning) {
+      this.props.moveTo('left')
+    }
+  }
+
   render() {
     const { theme, distance, bleConnected, bleConnecting, bleDisconnecting } = this.props;
     return (
@@ -43,7 +49,7 @@ class CompassScreen extends React.Component {
           {(bleConnected && !bleDisconnecting) &&
             <Button onPress={() => this.props.disconnect()} text="DISCONNECT" />
           }
-          <Button onPress={() => this.props.moveTo('left')} text="BACK TO MAP"/>
+          <Button onPress={() => this.handleBackToMap()} text="BACK TO MAP"/>
         </ButtonContainer>
       </Container>
     );

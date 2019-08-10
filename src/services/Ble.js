@@ -7,16 +7,22 @@ export default class Ble {
   confirmedConnection = false
   initiateDisconnection = false
 
+  start = () => {
+    BleManager.start({showAlert: false})
+  }
+
   connect = async (handleSetPeripheral, handleConfirmedConnection, sendData, confirmConnection, handleConnectionFailure) => {
-    await BleManager.start({showAlert: false})
-    await BleManager.scan([], 5, true).then(() => {
+    await BleManager.scan([], 3, true).then(() => {
       console.log("Scan started ...");
     });
     setTimeout(() => {
       BleManager.getDiscoveredPeripherals([]).then((peripheralsArray) => {
+        console.log(peripheralsArray);
         if (peripheralsArray.length > 1) {
+          let discoveredCrow = false         
           peripheralsArray.forEach((peripheral) => {
             if (peripheral.name === "DSDTECH HM-10") {
+              discoveredCrow = true
               BleManager.connect(peripheral.id).then(() => {
                 BleManager.retrieveServices(peripheral.id).then(async (peripheralInfo) => {
                   handleSetPeripheral(peripheral.id, peripheralInfo)
@@ -40,12 +46,16 @@ export default class Ble {
               })
             }
           })
+          if (!discoveredCrow) {
+            console.log("Could not find crow prototype");
+            handleConnectionFailure()
+          }
         } else {
-          console.log("Could not find crow prototype");
+          console.log("Could not find any bluetooth devices, is your device's bluetooth enabled?");
           handleConnectionFailure()
         }
       });
-    }, 5000)
+    }, 3000)
   }
 
   startNotification = (peripheralId, peripheralInfo) => {
