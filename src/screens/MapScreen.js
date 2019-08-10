@@ -33,7 +33,9 @@ class MapScreen extends React.Component {
   handleConfirmRoute = async () => {
     await this.props.askLocationPermission()
     if (this.props.permissionStatus == GRANTED || this.props.permissionStatus == GRANTED_IN_USE) {
-      this.props.moveTo('right')
+      if (!this.props.pageTransitioning) {
+        this.props.moveTo('right')
+      }
     } else (
       Alert.alert(
         'Location Permissions',

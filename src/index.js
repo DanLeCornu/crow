@@ -92,10 +92,10 @@ export default class App extends React.Component {
     }
   }
 
-  subscribeToForegroundLocation = () => {
+  subscribeToForegroundLocation = async () => {
     // current bug with this module, have to pass in a value to distance interval in order for timeInterval to work
     // https://github.com/expo/expo/issues/2682
-    Location.watchPositionAsync(
+    this.foregroundSubscription = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.Highest,
         distanceInterval: 0,
@@ -124,6 +124,7 @@ export default class App extends React.Component {
     await this.askLocationPermission()
     if (this.state.permissionStatus == GRANTED) {
       this.subscribeToBackgroundLocation()
+      if (this.foregroundSubscription) {this.foregroundSubscription.remove()}
       this.setState({ bleConnecting: true })
       this.ble.connect(
         this.handleSetPeripheral,
@@ -191,6 +192,7 @@ export default class App extends React.Component {
       this.handleUnconfirmedDisconnection
     )
     this.unsubscribeToBackgroundLocation()
+    this.subscribeToForegroundLocation()
   }
 
   handleSetBleDisconnecting = () => {

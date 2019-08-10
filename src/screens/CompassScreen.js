@@ -38,10 +38,16 @@ class CompassScreen extends React.Component {
         </DistanceContainer>
         <ButtonContainer>
           {!bleConnected && !bleConnecting &&
-            <Button onPress={() => this.props.connect()} text="CONNECT" />
+            <>
+              <Button onPress={() => this.props.connect()} text="CONNECT" />
+              <Button onPress={() => this.handleBackToMap()} text="BACK TO MAP"/>
+            </>
           }
           {bleConnecting &&
-            <Button disabled text="CONNECTING ..." />
+            <>
+              <Button disabled text="CONNECTING ..." />
+              <Button disabled text="BACK TO MAP"/>
+            </>
           }
           {bleDisconnecting &&
             <Button disabled text="DISCONNECTING ..." />
@@ -49,7 +55,6 @@ class CompassScreen extends React.Component {
           {(bleConnected && !bleDisconnecting) &&
             <Button onPress={() => this.props.disconnect()} text="DISCONNECT" />
           }
-          <Button onPress={() => this.handleBackToMap()} text="BACK TO MAP"/>
         </ButtonContainer>
       </Container>
     );
