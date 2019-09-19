@@ -8,22 +8,53 @@ import Button from '../components/Button'
 
 class CompassScreen extends React.Component {
 
-  render() {
-    const { theme, distance } = this.props;
+  handleBackToMap = () => {
+    if (!this.props.pageTransitioning) {
+      this.props.moveTo('left')
+    }
+  }
 
+  render() {
+    const { theme, distance, bleConnected, bleConnecting, bleDisconnecting } = this.props;
     return (
       <Container background={theme}>
         <CompassContainer>
-          <Compass />
+          {bleConnected ? (
+            <CustomText>Use the prototype hardware for direction :)</CustomText>
+          ) : (
+            <Compass />
+          )
+          }
         </CompassContainer>
         <DistanceContainer>
           <TextContainer>
-            <DistanceIcon source={require('../../assets/images/directions_black.png')}/>
-            <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+          {!bleConnected &&
+            <>
+              <DistanceIcon source={require('../../assets/images/directions_black.png')}/>
+              <DistanceText>{distance}</DistanceText><UnitText>KM</UnitText>
+            </>
+          }
           </TextContainer>
         </DistanceContainer>
         <ButtonContainer>
-          <Button onPress={() => this.props.moveTo('left')} text="BACK"/>
+          {!bleConnected && !bleConnecting &&
+            <>
+              <Button onPress={() => this.props.connect()} text="CONNECT" />
+              <Button onPress={() => this.handleBackToMap()} text="BACK TO MAP"/>
+            </>
+          }
+          {bleConnecting &&
+            <>
+              <Button disabled text="CONNECTING ..." />
+              <Button disabled text="BACK TO MAP"/>
+            </>
+          }
+          {bleDisconnecting &&
+            <Button disabled text="DISCONNECTING ..." />
+          }
+          {(bleConnected && !bleDisconnecting) &&
+            <Button onPress={() => this.props.disconnect()} text="DISCONNECT" />
+          }
         </ButtonContainer>
       </Container>
     );
@@ -72,9 +103,7 @@ const UnitText = styled(CustomText)`
   font-size: 18px;
   margin-left: 5px;
 `
-
 const ButtonContainer = styled.View`
   height: 20%;
-  flex-direction: row;
-  justify-content: center;
+  align-items: center;
 `

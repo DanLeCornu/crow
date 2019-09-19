@@ -5,10 +5,12 @@ import AppContext from '../AppContext';
 
 import Button from '../components/Button'
 
+import { storeData } from '../services/localStorage'
+
 class IntroScreen extends React.Component {
 
   completeIntro = () => {
-    this.props.storeData('skipIntro','true')
+    storeData('skipIntro','true')
     this.props.moveTo('right')
   }
 

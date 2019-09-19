@@ -1,49 +1,223 @@
-import React from 'react';
-import { Platform, Animated, Dimensions, NativeModules, AsyncStorage, StatusBar } from 'react-native';
-import { AppLoading, Asset, Font, Location, Permissions } from 'expo';
-import AppContext from './AppContext';
-import LoadingScreen from './screens/LoadingScreen';
-import IntroScreen from './screens/IntroScreen';
-import MapScreen from './screens/MapScreen';
-import CompassScreen from './screens/CompassScreen';
-import Geolib from 'geolib';
+import React from 'react'
+import { Platform, Animated, Dimensions, NativeModules, StatusBar, AppState, Alert, Linking } from 'react-native'
+
+import { AppLoading } from 'expo';
+import { Asset } from 'expo-asset';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import * as Font from 'expo-font';
+
+import AppContext from './AppContext'
+import LoadingScreen from './screens/LoadingScreen'
+import IntroScreen from './screens/IntroScreen'
+import MapScreen from './screens/MapScreen'
+import CompassScreen from './screens/CompassScreen'
+import Ble from './services/Ble'
+import { calcDistance } from './services/calcDistance'
+import { retrieveData, storeData } from './services/localStorage'
+import { defineBackgroundTask } from './services/backgroundLocationTask'
 
 import styled from 'styled-components';
+
+import { WAIT, GRANTED, DENIED, GRANTED_IN_USE, BACKGROUND_LOCATION_TASK, } from './lib/constants'
+
+defineBackgroundTask()
 
 export default class App extends React.Component {
   state = {
     theme: '#FFE853',
     screenHeight: 0,
     loadingComplete: false,
+    permissionStatus: WAIT,
+    permissionAlert: false,
+    subscribedToForegroundLocation: false,
     skipIntro: false,
     location: null,
     destination: null,
+    totalTripDistance: 0,
     distance: 0,
+    bleConnected: false,
+    bleConnecting: false,
+    bleDisconnecting: false,
+    peripheralId: null,
+    peripheralInfo: null,
     screenXPosition: new Animated.Value(0),
-    setDestination: destination => this.setDestination(destination),
-    clearDestination: () => this.clearDestination(),
-    moveTo: direction => this.moveTo(direction),
-    storeData: (k,v) => this.storeData(k,v)
+    pageTransitioning: false,
+    setRoute: d => this.setRoute(d),
+    moveTo: d => this.moveTo(d),
+    connect: () => this.connect(),
+    disconnect: () => this.disconnect(),
+    askLocationPermission: () => this.askLocationPermission(),
+    subscribeToForegroundLocation: () => this.subscribeToForegroundLocation(),
+    setPermissionAlert: (status) => this.setPermissionAlert(status),
+    setSkipIntro: () => this.setSkipIntro(),
   };
 
+  ble = new Ble()
+  
   componentDidMount() {
     this.setScreenHeight()
-    this.requestPermissions()
-    this.subscribeToLocation()
-    this.setSkipIntro()
+    this.askLocationPermission()
+    this.ble.start()
   }
 
   componentDidUpdate = (prevProps, prevState) => {
-    if (this.state.destination) {
-      if (prevState.location != this.state.location) {
-        this.setDistance()
-      }
+    if (this.state.destination && (prevState.location != this.state.location)) {
+      this.setDistance()
     }
   };
 
+  setPermissionAlert = (status) => {
+    this.setState({ permissionAlert: status })
+  }
+
+  askLocationPermission = async () => {
+    const { status, permissions } = await Permissions.askAsync(Permissions.LOCATION)
+    switch (status) {
+      case 'granted':
+        if (Platform.OS === 'ios') {
+          const { scope } = permissions.location.ios
+
+          this.setState({
+            permissionStatus: scope === 'always' ? GRANTED : GRANTED_IN_USE,
+          })
+        } else {
+          this.setState({ permissionStatus: GRANTED })
+        }
+        break
+      case 'denied':
+      default:
+        this.setState({ permissionStatus: DENIED })
+        break
+    }
+  }
+
+  subscribeToForegroundLocation = async () => {
+    // current bug with this module, have to pass in a value to distance interval in order for timeInterval to work
+    // https://github.com/expo/expo/issues/2682
+    this.foregroundSubscription = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.Highest,
+        distanceInterval: 0,
+        timeInterval: 2000,
+      },
+      async data => {
+        const location = [data.coords.latitude, data.coords.longitude];
+        await this.setState({ location });
+      },
+    );
+  };
+
+  subscribeToBackgroundLocation = () => {
+    Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+      accuracy: Location.Accuracy.Highest,
+      distanceInterval: 0,
+      timeInterval: 2000,
+    });
+  }
+
+  unsubscribeToBackgroundLocation = () => {
+    Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK)
+  }
+
+  connect = async () => {
+    await this.askLocationPermission()
+    if (this.state.permissionStatus == GRANTED) {
+      this.subscribeToBackgroundLocation()
+      if (this.foregroundSubscription) {this.foregroundSubscription.remove()}
+      this.setState({ bleConnecting: true })
+      this.ble.connect(
+        this.handleSetPeripheral,
+        this.handleConfirmedConnection,
+        this.sendData,
+        this.confirmConnection,
+        this.handleConnectionFailure
+      )
+    } else {
+      Alert.alert(
+        'Extra Location Permissions',
+        'Hey! We need your permission to access your location in the background, in order for the Crow bike mount to work. Please go to your app settings and select "Always" for location :)',
+        [
+          { text: 'OK, will do!', onPress: () => {Linking.openURL('app-settings:')} },
+        ],
+        { cancelable: false }
+      )
+    }
+  }
+
+  handleSetPeripheral = (peripheralId, peripheralInfo) => {
+    this.setState({ peripheralId, peripheralInfo })
+  }
+
+  handleConfirmedConnection = () => {
+    this.setState({
+      bleConnected: true,
+      bleConnecting: false
+    })
+  }
+
+  sendData = async () => {
+    let location, distance
+    if (AppState.currentState == "background") {
+      const locationLat = await retrieveData('locationLat')
+      const locationLon = await retrieveData('locationLon')
+      location = [parseFloat(locationLat), parseFloat(locationLon)]
+      distance = await retrieveData('distance')
+    } else {
+      location = this.state.location
+      distance = this.state.distance
+    }
+    const data = `${location.map((c) => {return c.toFixed(4)})},${this.state.destination.map((c) => {return c.toFixed(4)})},${distance},${this.state.totalTripDistance}`
+    const peripheralId = this.state.peripheralId
+    const peripheralInfo = this.state.peripheralInfo
+    this.ble.write(peripheralId, peripheralInfo, data)
+  }
+
+  confirmConnection = () => {
+    const peripheralId = this.state.peripheralId
+    const peripheralInfo = this.state.peripheralInfo
+    this.ble.write(peripheralId, peripheralInfo, "connect")
+  }
+
+  handleConnectionFailure = () => {
+    this.setState({bleConnecting: false})
+  }
+
+  disconnect = () => {
+    this.ble.disconnect(
+      this.handleSetBleDisconnecting,
+      this.handleInitiateDisconnection,
+      this.state.peripheralId,
+      this.handleConfirmedDisconnection,
+      this.handleUnconfirmedDisconnection
+    )
+    this.unsubscribeToBackgroundLocation()
+    this.subscribeToForegroundLocation()
+  }
+
+  handleSetBleDisconnecting = () => {
+    this.setState({ bleDisconnecting: true })
+  }
+
+  handleInitiateDisconnection = () => {
+    const peripheralId = this.state.peripheralId
+    const peripheralInfo = this.state.peripheralInfo
+    this.ble.write(peripheralId, peripheralInfo, "disconnect")
+  }
+
+  handleConfirmedDisconnection = () => {
+    this.setState({ bleConnected: false })
+    this.setState({ bleDisconnecting: false })
+  }
+
+  handleUnconfirmedDisconnection = () => {
+    this.setState({ bleConnected: false })
+    this.setState({ bleDisconnecting: false })
+  }
+
   setSkipIntro = async () => {
-    const skipIntro = await this.retrieveData('skipIntro')
-    this.setState({skipIntro})
+    const skipIntro = await retrieveData('skipIntro')
+    this.setState({ skipIntro })
   }
 
   setScreenHeight = () => {
@@ -58,65 +232,46 @@ export default class App extends React.Component {
     }
   }
 
-  setDestination = async destination => {
-    await this.setState({ destination });
-    this.setDistance()
+  setRoute = async destination => {
+    await this.setState({ destination })
+    await storeData('destinationLat', destination[0])
+    await storeData('destinationLon', destination[1])
+    await this.setDistance()
+    await this.setTotalTripDistance()
+    if (this.state.bleConnected) {
+      this.sendData()
+    }
   };
-
-  clearDestination = () => {
-    this.setState({ destination: null })
-  }
-
-  setDistance = () => {
-    let distanceM = Geolib.getDistance(
-      {
-        latitude: this.state.location[0],
-        longitude: this.state.location[1],
-      },
-      {
-        latitude: this.state.destination[0],
-        longitude: this.state.destination[1],
-      },
-    )
-    let distance = (distanceM / 1000).toFixed(1);
+  
+  setDistance = async () => {
+    const distance = await calcDistance(this.state.location, this.state.destination)
     this.setState({ distance })
   }
 
+  setTotalTripDistance = async () => {
+    const totalTripDistance = await calcDistance(this.state.location, this.state.destination)
+    this.setState({ totalTripDistance })
+  }
+
   moveTo = direction => {
+    this.setState({pageTransitioning: true})
     const currentPosition = this.state.screenXPosition._value
     const screenWidth = Dimensions.get('window').width  
-    if (direction === 'right') {
+    if (direction === 'right') {      
       Animated.timing(this.state.screenXPosition, {
         toValue: currentPosition - screenWidth,
         duration: 300,
       }).start();
-    } else if (direction === 'left') {
+    } else if (direction === 'left') {      
       Animated.timing(this.state.screenXPosition, {
         toValue: currentPosition + screenWidth,
         duration: 300,
       }).start();
     }
-  }
-
-  requestPermissions = () => {
-    Permissions.askAsync(Permissions.LOCATION);
-  };
-
-  subscribeToLocation = async () => {
     setTimeout(() => {
-      Location.watchPositionAsync(
-        {
-          enableHighAccuracy: true,
-          distanceInterval: 5,
-        },
-        data => {
-          const location = [data.coords.latitude, data.coords.longitude];
-          this.setState({ location });
-        },
-      );
-      this.moveTo('right');
-    }, 3000);
-  };
+      this.setState({pageTransitioning: false})
+    }, 300)
+  }
 
   loadResourcesAsync = async () => {
     return Promise.all([
@@ -143,25 +298,6 @@ export default class App extends React.Component {
   finishLoading = () => {
     this.setState({ loadingComplete: true });
   };
-
-  storeData = async (k,v) => {
-    try {
-      await AsyncStorage.setItem(k,v)
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
-
-  retrieveData = async (k) => {
-    try {
-      const value = await AsyncStorage.getItem(k)
-      if (value !== null) {
-        return value
-      }
-    } catch (e) {
-      console.log(e.message);
-    }
-  }
 
   render() {
     if (!this.state.loadingComplete && !this.props.skipLoadingScreen) {

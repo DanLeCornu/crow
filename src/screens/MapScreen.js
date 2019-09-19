@@ -1,56 +1,59 @@
-import React from 'react';
-import { MapView, LinearGradient } from 'expo';
-import { Animated, Linking, Dimensions } from 'react-native';
+import React from 'react'
+import { LinearGradient } from 'expo-linear-gradient'
+import { Animated, Linking, Dimensions, Alert } from 'react-native'
 import { CustomText } from '../components/CustomText'
-import AppContext from '../AppContext';
-import styled from 'styled-components';
+import MapView from 'react-native-maps'
+import AppContext from '../AppContext'
+import styled from 'styled-components'
+
+import { GRANTED, GRANTED_IN_USE } from '../lib/constants'
 
 class MapScreen extends React.Component {
   state = {
     actionsPosition: new Animated.Value(-200),
     markerWidth: Dimensions.get('window').width * 0.10
-  };
+  }
 
   handleSetDestination = e => {
     const destination = [
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
       parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-    ];
-    this.props.setDestination(destination);
-    this.showMapActions();
+    ];   
+    this.props.setRoute(destination)
+    this.showMapActions()
   };
-
-  handleClearDestination = () => {
-    this.props.clearDestination();
-    this.hideMapActions();
-  }
 
   showMapActions = () => {
     Animated.timing(this.state.actionsPosition, {
       toValue: 0,
-      duration: 200,
-    }).start();
+      duration: 400,
+    }).start()
   };
 
-  hideMapActions = () => {
-    Animated.timing(this.state.actionsPosition, {
-      toValue: -200,
-      duration: 200,
-    }).start();
-  };
-
-  handleConfirmRoute = () => {
-    this.props.moveTo('right')
+  handleConfirmRoute = async () => {
+    await this.props.askLocationPermission()
+    if (this.props.permissionStatus == GRANTED || this.props.permissionStatus == GRANTED_IN_USE) {
+      if (!this.props.pageTransitioning) {
+        this.props.moveTo('right')
+      }
+    } else (
+      Alert.alert(
+        'Location Permissions',
+        'Hey! We need your permission to access your location, in order for the Crow app to work. Please go to your app settings and select "Always" for location :)',
+        [{ text: 'OK, will do!', onPress: () => { Linking.openURL('app-settings:') }}],
+        { cancelable: false }
+      )
+    )
   }
 
   render() {
-    const { actionsPosition, markerWidth } = this.state;
+    const { actionsPosition, markerWidth } = this.state
     const {
       location,
       destination,
       distance,
       theme,
-    } = this.props;
+    } = this.props
 
     return (
       <Container>
@@ -68,7 +71,7 @@ class MapScreen extends React.Component {
             longitudeDelta: 0.04,
           }}
           onPress={e => {
-            this.handleSetDestination(e);
+            this.handleSetDestination(e)
           }}
         >
           {destination &&
@@ -79,7 +82,7 @@ class MapScreen extends React.Component {
                 longitude: destination[1],
               }}
               onDragEnd={e => {
-                this.handleSetDestination(e);
+                this.handleSetDestination(e)
               }}
             >
               <MarkerIcon
@@ -107,7 +110,7 @@ class MapScreen extends React.Component {
             </ActionsBackground>
           </ActionsContainer>
       </Container>
-    );
+    )
   }
 }
 
@@ -117,7 +120,7 @@ export default class MapScreenContainer extends React.Component {
       <AppContext.Consumer>
         {context => <MapScreen {...context} />}
       </AppContext.Consumer>
-    );
+    )
   }
 }
 
@@ -203,4 +206,5 @@ const PrivacyButtonImage = styled.Image`
 const MarkerIcon = styled.Image`
   width: ${props => `${props.width}px`};
   height: ${props => `${props.width}px`};
+  margin-bottom: ${props => `${props.width/2}px`};
 `
