@@ -1,8 +1,10 @@
 import React from 'react'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Animated, Linking, Dimensions, Alert } from 'react-native'
+import { Animated, Linking, Dimensions, Alert, Keyboard } from 'react-native'
 import { CustomText } from '../components/CustomText'
 import MapView from 'react-native-maps'
+import { GooglePlacesInput } from '../components/GooglePlacesInput'
+
 import AppContext from '../AppContext'
 import styled from 'styled-components'
 
@@ -14,12 +16,23 @@ class MapScreen extends React.Component {
     markerWidth: Dimensions.get('window').width * 0.10
   }
 
-  handleSetDestination = e => {
-    const destination = [
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude)),
-      parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude)),
-    ];   
+  handleSetDestination = (lat,lon) => {
+    const destination = [lat,lon];   
     this.props.setRoute(destination)
+    this.map.fitToCoordinates(
+      [{
+        latitude: lat,
+        longitude: lon
+      },
+      {
+        latitude: this.props.location[0],
+        longitude: this.props.location[1]
+      }],
+      {
+        edgePadding: { top: 120, right: 80, bottom: 120, left: 80 },
+        animated: true,
+      }
+    )
     this.showMapActions()
   };
 
@@ -60,7 +73,9 @@ class MapScreen extends React.Component {
         <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co/privacy/crow')}>
           <PrivacyButtonImage source={require('../../assets/images/privacy_button.png')} />
         </PrivacyButton>
+        <GooglePlacesInput setDestination={this.handleSetDestination}/>
         <Map
+          ref={ref => this.map = ref}
           showsUserLocation
           mapType="mutedStandard"
           showsPointsOfInterest={false}
@@ -71,25 +86,31 @@ class MapScreen extends React.Component {
             longitudeDelta: 0.04,
           }}
           onPress={e => {
-            this.handleSetDestination(e)
+            const lat = parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude))
+            const lon = parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude))
+            this.handleSetDestination(lat, lon)
+            Keyboard.dismiss()
           }}
         >
-          {destination &&
-            <MapView.Marker
-              draggable
-              coordinate={{
-                latitude: destination[0],
-                longitude: destination[1],
-              }}
-              onDragEnd={e => {
-                this.handleSetDestination(e)
-              }}
-            >
-              <MarkerIcon
-                source={require('../../assets/images/crow.png')}
-                width={markerWidth}
-              />
-            </MapView.Marker>
+          {destination && (
+              <MapView.Marker
+                draggable
+                coordinate={{
+                  latitude: destination[0],
+                  longitude: destination[1],
+                }}
+                onDragEnd={e => {
+                  const lat = parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude))
+                  const lon = parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude))
+                  this.handleSetDestination(lat, lon)
+                }}
+              >
+                <MarkerIcon
+                  source={require('../../assets/images/crow.png')}
+                  width={markerWidth}
+                />
+              </MapView.Marker>
+            )
           }
         </Map>
           <ActionsContainer style={{bottom: actionsPosition}}>
@@ -196,7 +217,7 @@ const ButtonIcon = styled.Image`
 const PrivacyButton = styled.TouchableHighlight`
   position: absolute;
   z-index: 1;
-  top: 10px;
+  top: 54px;
   left: 10px;
 `
 const PrivacyButtonImage = styled.Image`

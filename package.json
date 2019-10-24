@@ -29,8 +29,8 @@
     "react-native": "https://github.com/expo/react-native/archive/sdk-33.0.0.tar.gz",
     "react-native-background-timer": "^2.1.1",
     "react-native-ble-manager": "^6.6.4",
+    "react-native-google-places-autocomplete": "^1.3.9",
     "react-native-maps": "~0.24.0",
-    "react-native-maps-directions": "^1.6.0",
     "react-native-unimodules": "^0.4.0",
     "react-navigation": "^2.18.2",
     "styled-components": "^4.1.3"
