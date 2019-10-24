@@ -70,9 +70,9 @@ class MapScreen extends React.Component {
 
     return (
       <Container>
-        <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co/privacy/crow')}>
+        {/* <PrivacyButton onPress={() => Linking.openURL('https://www.noquarter.co/privacy/crow')}>
           <PrivacyButtonImage source={require('../../assets/images/privacy_button.png')} />
-        </PrivacyButton>
+        </PrivacyButton> */}
         <GooglePlacesInput setDestination={this.handleSetDestination}/>
         <Map
           ref={ref => this.map = ref}
@@ -93,28 +93,27 @@ class MapScreen extends React.Component {
           }}
         >
           {destination && (
-              <MapView.Marker
-                draggable
-                coordinate={{
-                  latitude: destination[0],
-                  longitude: destination[1],
-                }}
-                onDragEnd={e => {
-                  const lat = parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude))
-                  const lon = parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude))
-                  this.handleSetDestination(lat, lon)
-                }}
-              >
-                <MarkerIcon
-                  source={require('../../assets/images/crow.png')}
-                  width={markerWidth}
-                />
-              </MapView.Marker>
-            )
-          }
+            <MapView.Marker
+              draggable
+              coordinate={{
+                latitude: destination[0],
+                longitude: destination[1],
+              }}
+              onDragEnd={e => {
+                const lat = parseFloat(JSON.stringify(e.nativeEvent.coordinate.latitude))
+                const lon = parseFloat(JSON.stringify(e.nativeEvent.coordinate.longitude))
+                this.handleSetDestination(lat, lon)
+              }}
+            >
+              <MarkerIcon
+                source={require('../../assets/images/crow.png')}
+                width={markerWidth}
+              />
+            </MapView.Marker>
+          )}
         </Map>
           <ActionsContainer style={{bottom: actionsPosition}}>
-            <ActionsBackground colors={['transparent','rgba(0,0,0,0.8)']}>
+            <ActionsBackground colors={['transparent','rgba(0,0,0,0.5)']}>
               <Actions>
                 <ActionsDistanceContainer>
                   <ActionsDistance>
@@ -155,7 +154,7 @@ const Map = styled(MapView)`
 const ActionsContainer = styled(Animated.View)`
   position: absolute;
   width: 100%;
-  height: 200px;
+  height: 100px;
 `
 const ActionsBackground = styled(LinearGradient)`
   width: 100%;
@@ -163,7 +162,7 @@ const ActionsBackground = styled(LinearGradient)`
   justify-content: flex-end;
 `
 const Actions = styled.View`
-  height: 100px;
+  height: 100%;
   width: 100%;
   flex-wrap: wrap;
 `

@@ -284,6 +284,7 @@ export default class App extends React.Component {
         require('../assets/images/compass_arrow.png'),
         require('../assets/images/directions_white.png'),
         require('../assets/images/directions_black.png'),
+        require('../assets/images/search.png'),
       ]),
       Font.loadAsync({
         'galano-grotesque': require('../assets/fonts/GalanoGrotesque-Bold.ttf'),
