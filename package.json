@@ -23,7 +23,7 @@
     "expo-task-manager": "~5.0.1",
     "expokit": "33.0.4",
     "geolib": "^2.0.24",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.21",
     "lodash.throttle": "^4.1.1",
     "react": "16.8.3",
     "react-native": "https://github.com/expo/react-native/archive/sdk-33.0.0.tar.gz",
